@@ -19,12 +19,8 @@
             Install add-ons from the magical Steinmann
         </summary>
         <description>
-            
+
         </description>
-        <disclaimer>
-            The SuperRepo generator fetches addons from multiple sources. Therefore SuperRepo accepts no responsibility for included addons.[CR]
-        </disclaimer>
         <platform>all</platform>
-        <website>https://superrepo.org/</website>
     </extension>
 </addon>
