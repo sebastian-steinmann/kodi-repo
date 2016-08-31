@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addons>
+	<addon id="service.subtitles.http" name="Http Subs" version="0.1.0" provider-name="Steinmann">
+		<requires>
+			<import addon="xbmc.python" version="2.14.0"/>
+		</requires>
+		<extension point="xbmc.subtitle.module"
+			library="service.py"/>
+			<extension point="xbmc.addon.metadata">
+				<summary lang="en">Get subtitles from HTTP</summary>
+				<description lang="en">Tries to find a sub with the same name next to it. </description>
+				<disclaimer lang="en"/>
+				<platform>all</platform>
+				<language/>
+				<license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
+				<forum></forum>
+				<website/>
+				<email/>
+				<source></source>
+			</extension>
+		</addon>
+	</addons>
