@@ -4,13 +4,13 @@
     </requires>
     <extension point="xbmc.addon.repository" name="Http Repository">
         <info compressed="false">
-            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/latest/plugins/addons.xml
+            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/master/plugins/addons.xml
         </info>
         <checksum>
-            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/latest/plugins/addons.xml.md5
+            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/master/plugins/addons.xml.md5
         </checksum>
         <datadir zip="true">
-            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/latest/plugins
+            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/master/plugins/
         </datadir>
         <hashes>true</hashes>
     </extension>
