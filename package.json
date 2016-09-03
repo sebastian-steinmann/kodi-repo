@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/sebastian-steinmann/kodi-repo/issues"
   },
-  "homepage": "https://github.com/sebastian-steinmann/kodi-repo#readme"
+  "homepage": "https://github.com/sebastian-steinmann/kodi-repo#readme",
+  "devDependencies": {
+    "checksum": "^0.1.1"
+  }
 }
