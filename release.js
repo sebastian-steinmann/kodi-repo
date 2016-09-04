@@ -3,7 +3,7 @@ const path = require('path');
 const xml2js = require('xml2js');
 const parser = new xml2js.Parser();
 const JSZip = require("jszip");
-const checksum = require('checksum');
+const md5File = require('md5-file')
 const rimraf = require('rimraf');
 
 const config = {
@@ -39,11 +39,9 @@ function iterateAddons(plugins, index, cb) {
 }
 
 function zipAddon(plugin, cb) {
-	console.log(plugin);
 	const addonsrc = fs.readFileSync(path.join(config.src, plugin, 'addon.xml'),{encoding: 'utf-8'});
 	addonsList.push(addonsrc);
 	parser.parseString(addonsrc, (err, data) => {
-		console.log('got xml');
 		const version = data.addon.$.version;
 		const zip = new JSZip();
 		var dir = path.join(config.src, plugin);
@@ -55,7 +53,6 @@ function zipAddon(plugin, cb) {
 		zip.generateNodeStream({type:'nodebuffer', streamFiles: true})
 			.pipe(fs.createWriteStream(zipFile))
 			.on('finish', function () {
-				console.log('zip created')
 				createChecksumFile(zipFile);
 				cb();
 			});
@@ -78,7 +75,7 @@ function createAddonsXml() {
 }
 
 function createChecksumFile(filename) {
-	const hash = checksum(path.resolve(filename), { algorithm: 'md5' });
+	const hash = md5File.sync(path.resolve(filename));
     fs.writeFileSync(filename + '.md5', hash); //CB sends it away
 }
 
