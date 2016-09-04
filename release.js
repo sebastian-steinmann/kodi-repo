@@ -29,16 +29,22 @@ function iterateAddons(plugins, index, cb) {
 }
 
 function zipAddon(plugin, cb) {
-	const addonsrc = fs.readFileSync(path.join(config.src, plugin, 'addon.xml'),{encoding: 'utf-8'});
+	const srcFolder = path.join(config.src, plugin);
+	const destDir = path.join(config.dest, plugin);
+
+	const addonsrc = fs.readFileSync(path.join(srcFolder, 'addon.xml'),{encoding: 'utf-8'});
 	addonsList.push(addonsrc);
 	parser.parseString(addonsrc, (err, data) => {
 		const version = data.addon.$.version;
+		
 		const zip = new JSZip();
-		var dir = path.join(config.src, plugin);
-		addFilesRec(zip, dir);
-
-		fs.mkdirSync(path.join(config.dest, plugin));
-
+		const zipFolder = zip.folder(plugin);
+		addFilesRec(zipFolder, srcFolder);
+		
+		fs.mkdirSync(destDir);
+		// Copy icon file
+		fs.writeFileSync(path.join(destDir, 'icon.png'), fs.readFileSync(path.join(srcFolder, 'icon.png')));
+		
 		const zipFile = path.join(config.dest, plugin, `${plugin}-${version}.zip`);
 		zip.generateNodeStream({type:'nodebuffer', streamFiles: false})
 			.pipe(fs.createWriteStream(zipFile))
