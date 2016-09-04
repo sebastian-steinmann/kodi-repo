@@ -40,7 +40,7 @@ function zipAddon(plugin, cb) {
 		fs.mkdirSync(path.join(config.dest, plugin));
 
 		const zipFile = path.join(config.dest, plugin, `${plugin}-${version}.zip`);
-		zip.generateNodeStream({type:'nodebuffer', streamFiles: true})
+		zip.generateNodeStream({type:'nodebuffer', streamFiles: false})
 			.pipe(fs.createWriteStream(zipFile))
 			.on('finish', function () {
 				createChecksumFile(zipFile);
