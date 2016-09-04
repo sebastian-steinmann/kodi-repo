@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>					<addons>
 				
-<addon id="service.subtitles.http" name="Http Subs" version="0.1.1" provider-name="Steinmann">
+<addon id="service.subtitles.http" name="Http Subs" version="0.1.2" provider-name="Steinmann">
  <requires>
     <import addon="xbmc.python" version="2.14.0"/>
 </requires>
