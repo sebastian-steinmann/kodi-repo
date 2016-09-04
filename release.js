@@ -11,16 +11,6 @@ const config = {
 	dest: './plugins'
 }
 
-/***
-clean dest
-read addonsxml
-create zip of src
-copy to version number folder dest
-create md5 of zip
-create addons.xml
-create md5 og xml
-***/
-
 const plugins = fs.readdirSync(config.src);
 const addonsList = [];
 rimraf(config.dest, () => {
