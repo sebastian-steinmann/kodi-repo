@@ -33,6 +33,9 @@ __temp__ = unicode(xbmc.translatePath(os.path.join(__profile__, 'temp', '')), 'u
 
 sys.path.append(__resource__)
 
+def log(module, msg):
+    xbmc.log((u"### [%s] %s" % (module, msg,)), level=xbmc.LOGERROR)
+
 def append_subtitle(item):
     title = item['filename']
     listitem = xbmcgui.ListItem(label='English',
@@ -44,6 +47,9 @@ def append_subtitle(item):
     listitem.setProperty("hearing_imp", 'false')
 
     url = "plugin://%s/?action=download&link=%s" % (__scriptid__, item['link'])
+    if 'rar' in item:
+        url += "&rar=true"
+
     # add it to list, this can be done as many times as needed for all subtitles found
     xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listitem, isFolder=False)
 
@@ -71,29 +77,112 @@ def parse_url(url):
     cleanUrl = "%s://%s%s" % (urlParts.scheme, netlocParts[1], urlParts.path)
     return cleanUrl, user, password
 
-def check_source(url):
+def createRequestResult(url, head):
     cleanUrl, username, password = parse_url(url)
 
     request = urllib2.Request(cleanUrl)
     base64string = base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
     request.add_header("Authorization", "Basic %s" % base64string)
-    request.get_method = lambda : 'HEAD'
-    result = urllib2.urlopen(request)
+    if head:
+        request.get_method = lambda : 'HEAD'
+    return urllib2.urlopen(request)
+
+def check_source(url):
+    result = createRequestResult(url, True)
 
     return result.getcode() == 200
+
+class MediaVaultParser(HTMLParser.HTMLParser):
+    def __init__(self):
+        HTMLParser.HTMLParser.__init__(self)
+        self.data = []
+    def handle_starttag(self, tag, attrs):
+        if tag == "a":
+            for name, value in attrs:
+                if name == 'href' and value != '../':
+                    self.data.append(value)
+                    return
+
+
+
+def listFiles(url):
+    cleanUrl, username, password = parse_url(url)
+
+    request = urllib2.Request(cleanUrl)
+    base64string = base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
+    request.add_header("Authorization", "Basic %s" % base64string)
+    result = urllib2.urlopen(request)
+    content = result.read()
+
+    parser = MediaVaultParser()
+    parser.feed(content)
+    for sub in parser.data:
+        append_subtitle({
+            'filename': sub,
+            'link': url + sub,
+            'rar': True
+        })
+
+
+def checkSubsFolder(path):
+    url = os.path.splitext(path)[0]+'/Subs/'
+    try:
+        if (check_source(url)):
+            listFiles(url)
+    except:
+        pass
+
+
+def checkSrtFile(path):
+    item = {}
+    item['link'] = os.path.splitext(path)[0]+'.srt'
+    item['filename'] = os.path.basename(item['link'])
+    try:
+        if (check_source(item['link'])):
+            append_subtitle(item)
+    except:
+        pass
+
+
+def downloadRar(url):
+    uid = uuid.uuid4()
+    tempdir = os.path.join(__temp__, unicode(uid))
+    result = "";
+
+    response = createRequestResult(url, False)
+
+    xbmcvfs.mkdirs(tempdir)
+
+    local_tmp_file = os.path.join(tempdir, "http-sub.rar")
+    local_file_handle = xbmcvfs.File(local_tmp_file, "wb")
+    local_file_handle.write(response.read())
+    local_file_handle.close()
+
+    xbmc.executebuiltin(('XBMC.Extract("%s","%s")' % (local_tmp_file, tempdir,)).encode('utf-8'), True)
+    for file in xbmcvfs.listdir(tempdir)[1]:
+        if os.path.splitext(file)[1] == '.rar':
+            xbmc.executebuiltin(('XBMC.Extract("%s","%s")' % (os.path.join(tempdir, file), tempdir,)).encode('utf-8'), True)
+            result = os.path.join(tempdir, os.path.splitext(file)[0] + '.sub')
+
+    return result
+
 
 params = get_params()
 
 if params['action'] == 'search' or params['action'] == 'manualsearch':
     item = {}
     file_original_path = urllib.unquote(xbmc.Player().getPlayingFile().decode('utf-8'))  # Full path
-    item['link'] = os.path.splitext(file_original_path)[0]+'.srt'
-    item['filename'] = os.path.basename(item['link'])
-    if (check_source(item['link'])):
-        append_subtitle(item)
+    checkSubsFolder(file_original_path)
+    checkSrtFile(file_original_path)
+
 
 elif params['action'] == 'download':
-    sub = params["link"]
+    if 'rar' in params:
+        sub = downloadRar(params["link"])
+    else: 
+        log(__name__, params["link"].decode('utf-8'))
+        sub = params["link"]
+
     listitem = xbmcgui.ListItem(label=sub)
     xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=sub, listitem=listitem, isFolder=False)
 
