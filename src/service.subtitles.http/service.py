@@ -179,8 +179,7 @@ if params['action'] == 'search' or params['action'] == 'manualsearch':
 elif params['action'] == 'download':
     if 'rar' in params:
         sub = downloadRar(params["link"])
-    else: 
-        log(__name__, params["link"].decode('utf-8'))
+    else:
         sub = params["link"]
 
     listitem = xbmcgui.ListItem(label=sub)

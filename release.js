@@ -13,13 +13,10 @@ const config = {
 
 const plugins = fs.readdirSync(config.src);
 const addonsList = [];
-rimraf(config.dest, () => {
-	fs.mkdir(config.dest, () => {
-		iterateAddons(plugins, 0, createAddonsXml);
-	});
-});
-
-
+if (!fs.lstatSync(config.dest)) {
+	fs.mkdirSync(config.dest);
+}
+iterateAddons(plugins, 0, createAddonsXml);
 
 function iterateAddons(plugins, index, cb) {
 	if (index < plugins.length) {
@@ -41,6 +38,9 @@ function zipAddon(plugin, cb) {
 		const zipFolder = zip.folder(plugin);
 		addFilesRec(zipFolder, srcFolder);
 		
+		if (fs.lstatSync(destDir)) {
+			rimraf.sync(destDir);
+		}
 		fs.mkdirSync(destDir);
 		// Copy icon file
 		fs.writeFileSync(path.join(destDir, 'icon.png'), fs.readFileSync(path.join(srcFolder, 'icon.png')));
