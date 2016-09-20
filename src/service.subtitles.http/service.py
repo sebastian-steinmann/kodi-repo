@@ -18,6 +18,7 @@ import HTMLParser
 from operator import itemgetter
 from urlparse import urlparse
 import base64
+import shutil
 
 __addon__ = xbmcaddon.Addon()
 __author__ = __addon__.getAddonInfo('author')
@@ -46,9 +47,7 @@ def append_subtitle(item):
     listitem.setProperty("sync", 'true')
     listitem.setProperty("hearing_imp", 'false')
 
-    url = "plugin://%s/?action=download&link=%s" % (__scriptid__, item['link'])
-    if 'rar' in item:
-        url += "&rar=true"
+    url = "plugin://%s/?action=download&link=%s&filename=%s" % (__scriptid__, item['link'], title)
 
     # add it to list, this can be done as many times as needed for all subtitles found
     xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listitem, isFolder=False)
@@ -92,7 +91,7 @@ def check_source(url):
 
     return result.getcode() == 200
 
-class MediaVaultParser(HTMLParser.HTMLParser):
+class FileListParser(HTMLParser.HTMLParser):
     def __init__(self):
         HTMLParser.HTMLParser.__init__(self)
         self.data = []
@@ -114,13 +113,12 @@ def listFiles(url):
     result = urllib2.urlopen(request)
     content = result.read()
 
-    parser = MediaVaultParser()
+    parser = FileListParser()
     parser.feed(content)
     for sub in parser.data:
         append_subtitle({
             'filename': sub,
-            'link': url + sub,
-            'rar': True
+            'link': url + sub
         })
 
 
@@ -144,7 +142,7 @@ def checkSrtFile(path):
         pass
 
 
-def downloadRar(url):
+def download(url, filename):
     uid = uuid.uuid4()
     tempdir = os.path.join(__temp__, unicode(uid))
     result = "";
@@ -153,10 +151,13 @@ def downloadRar(url):
 
     xbmcvfs.mkdirs(tempdir)
 
-    local_tmp_file = os.path.join(tempdir, "http-sub.rar")
+    local_tmp_file = os.path.join(tempdir, filename)
     local_file_handle = xbmcvfs.File(local_tmp_file, "wb")
     local_file_handle.write(response.read())
     local_file_handle.close()
+
+    if os.path.splitext(filename)[1] != '.rar':
+        return os.path.join(tempdir, filename)
 
     xbmc.executebuiltin(('XBMC.Extract("%s","%s")' % (local_tmp_file, tempdir,)).encode('utf-8'), True)
     for file in xbmcvfs.listdir(tempdir)[1]:
@@ -170,17 +171,12 @@ def downloadRar(url):
 params = get_params()
 
 if params['action'] == 'search' or params['action'] == 'manualsearch':
-    item = {}
     file_original_path = urllib.unquote(xbmc.Player().getPlayingFile().decode('utf-8'))  # Full path
-    checkSubsFolder(file_original_path)
     checkSrtFile(file_original_path)
-
+    checkSubsFolder(file_original_path)
 
 elif params['action'] == 'download':
-    if 'rar' in params:
-        sub = downloadRar(params["link"])
-    else:
-        sub = params["link"]
+    sub = download(params["link"], params["filename"])
 
     listitem = xbmcgui.ListItem(label=sub)
     xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=sub, listitem=listitem, isFolder=False)

@@ -38,10 +38,9 @@ function zipAddon(plugin, cb) {
 		const zipFolder = zip.folder(plugin);
 		addFilesRec(zipFolder, srcFolder);
 		
-		if (fs.lstatSync(destDir)) {
-			rimraf.sync(destDir);
+		if (!fs.lstatSync(destDir)) {
+			fs.mkdirSync(destDir);
 		}
-		fs.mkdirSync(destDir);
 		// Copy icon file
 		fs.writeFileSync(path.join(destDir, 'icon.png'), fs.readFileSync(path.join(srcFolder, 'icon.png')));
 		

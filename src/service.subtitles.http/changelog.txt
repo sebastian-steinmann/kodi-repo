@@ -1,2 +1,5 @@
+0.1.4
+ - Fixed srt download using tmp folder
+ - Cleanup of code
 0.1.3
  - Download subs from /Subs/*.rar
