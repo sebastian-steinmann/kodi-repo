@@ -1,3 +1,5 @@
+0.1.5
+ - Fixed subs with different filenames than foldername
 0.1.4
  - Fixed srt download using tmp folder
  - Cleanup of code

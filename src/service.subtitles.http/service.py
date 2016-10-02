@@ -141,12 +141,20 @@ def checkSrtFile(path):
     except:
         pass
 
+def get_file_in_dir(dir, fileType):
+    for file in xbmcvfs.listdir(dir)[1]:
+        if os.path.splitext(file)[1] == fileType:
+            return file
+
+
+def extract_file(dir, fileType):
+    file = get_file_in_dir(dir, fileType)
+    xbmc.executebuiltin(('XBMC.Extract("%s","%s")' % (os.path.join(dir, file), dir,)).encode('utf-8'), True)
+    return os.path.join(dir, get_file_in_dir(dir, '.sub'))
 
 def download(url, filename):
     uid = uuid.uuid4()
     tempdir = os.path.join(__temp__, unicode(uid))
-    result = "";
-
     response = createRequestResult(url, False)
 
     xbmcvfs.mkdirs(tempdir)
@@ -160,13 +168,7 @@ def download(url, filename):
         return os.path.join(tempdir, filename)
 
     xbmc.executebuiltin(('XBMC.Extract("%s","%s")' % (local_tmp_file, tempdir,)).encode('utf-8'), True)
-    for file in xbmcvfs.listdir(tempdir)[1]:
-        if os.path.splitext(file)[1] == '.rar':
-            xbmc.executebuiltin(('XBMC.Extract("%s","%s")' % (os.path.join(tempdir, file), tempdir,)).encode('utf-8'), True)
-            result = os.path.join(tempdir, os.path.splitext(file)[0] + '.sub')
-
-    return result
-
+    return extract_file(tempdir, '.rar')
 
 params = get_params()
 
