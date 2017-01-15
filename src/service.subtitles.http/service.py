@@ -131,16 +131,6 @@ def checkSubsFolder(path):
         pass
 
 
-def checkSrtFile(path):
-    item = {}
-    item['link'] = os.path.splitext(path)[0]+'.srt'
-    item['filename'] = os.path.basename(item['link'])
-    try:
-        if (check_source(item['link'])):
-            append_subtitle(item)
-    except:
-        pass
-
 def get_file_in_dir(dir, fileType):
     for file in xbmcvfs.listdir(dir)[1]:
         if os.path.splitext(file)[1] == fileType:
@@ -174,7 +164,6 @@ params = get_params()
 
 if params['action'] == 'search' or params['action'] == 'manualsearch':
     file_original_path = urllib.unquote(xbmc.Player().getPlayingFile().decode('utf-8'))  # Full path
-    checkSrtFile(file_original_path)
     checkSubsFolder(file_original_path)
 
 elif params['action'] == 'download':
