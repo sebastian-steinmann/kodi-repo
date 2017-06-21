@@ -385,3 +385,48 @@ class KodiMovies(object):
             country_id = self._add_country(country)
 
         return country_id
+
+    def add_update_art(self, image_url, kodi_id, media_type, image_type):
+        # Possible that the imageurl is an empty string
+        if image_url:
+
+            cache_image = False
+
+            query = '''
+                SELECT url FROM art
+                WHERE media_id = ?
+                AND media_type = ?
+                AND type = ?
+            '''
+            self.cursor.execute(query, (kodi_id, media_type, image_type,))
+            try: # Update the artwork
+                url = self.cursor.fetchone()[0]
+
+            except TypeError: # Add the artwork
+                cache_image = True
+                log.debug("Adding Art Link for kodiId: %s (%s)", kodi_id, image_url)
+
+                query = (
+                    '''
+                    INSERT INTO art(media_id, media_type, type, url)
+
+                    VALUES (?, ?, ?, ?)
+                    '''
+                )
+                self.cursor.execute(query, (kodi_id, media_type, image_type, image_url))
+
+            else: # Only cache artwork if it changed
+                if url != image_url:
+                    cache_image = True
+
+                    log.info("Updating Art url for %s kodiId: %s (%s) -> (%s)",
+                             image_type, kodi_id, url, image_url)
+
+                    query = '''
+                        UPDATE art
+                        SET url = ?
+                        WHERE media_id = ?
+                        AND media_type = ?
+                        AND type = ?
+                    '''
+                    self.cursor.execute(query, (image_url, kodi_id, media_type, image_type))

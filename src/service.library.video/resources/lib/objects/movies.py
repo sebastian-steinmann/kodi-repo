@@ -83,7 +83,6 @@ class Movies(object):
             ratingid = self.kodi_db.add_ratings(movieid, "movie", "default", rating, votecount)
 
             # add unique id
-            uniqueid = self.kodi_db.create_entry_uniqueid()
             uniqueid = self.kodi_db.add_uniqueid(movieid, "movie", imdb, "imdb")
 
             #add path
@@ -96,5 +95,7 @@ class Movies(object):
                 votecount, uniqueid, writer, year, uniqueid, title,
                 runtime, mpaa, genre, director, title, None, None,
                 country, year)
-
+        
+        self.kodi_db.add_update_art(movie.get('poster'), movieid, 'movie', 'poster')
+        self.kodi_db.add_update_art(movie.get('poster'), movieid, 'movie', 'thumb')
         self.kodi_db.add_genres(movieid, genres, "movie")
