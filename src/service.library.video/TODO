@@ -1,0 +1,8 @@
+ * Fikse insert_id
+ * Timestamp check
+ * Skuespillere
+ * Artwork
+ * Flere filmer med samme imdb_id
+    * Releases
+    * Språk
+ * Fjerne filmer som ikke lenger ligger der
