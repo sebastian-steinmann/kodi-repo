@@ -19,45 +19,19 @@ class KodiMovies(object):
         self.cursor = cursor
         self.kodi_version = int(xbmc.getInfoLabel('System.BuildVersion')[:2])
 
-    def create_entry_path(self):
-        self.cursor.execute("select coalesce(max(idPath),0) from path")
-        kodi_id = self.cursor.fetchone()[0] + 1
-
-        return kodi_id
-
-    def create_entry_file(self):
-        self.cursor.execute("select coalesce(max(idFile),0) from files")
-        kodi_id = self.cursor.fetchone()[0] + 1
-
-        return kodi_id
-
-    def create_entry_uniqueid(self):
-        self.cursor.execute("select coalesce(max(uniqueid_id),0) from uniqueid")
-        kodi_id = self.cursor.fetchone()[0] + 1
-
-        return kodi_id
-
-    def create_entry_genre(self):
-        self.cursor.execute("select coalesce(max(genre_id),0) from genre")
-        kodi_id = self.cursor.fetchone()[0] + 1
-
-        return kodi_id
-
     def add_path(self, path, media_type, scraper):
         """ Adds path object """
         path_id = self.get_path(path)
         if path_id is None:
             # Create a new entry
-            path_id = self.create_entry_path()
             query = (
                 '''
-                INSERT INTO path(idPath, strPath, strContent, strScraper, noUpdate)
-
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO path(strPath, strContent, strScraper, noUpdate)
+                VALUES (?, ?, ?, ?)
                 '''
             )
-            self.cursor.execute(query, (path_id, path, media_type, scraper, 1))
-
+            self.cursor.execute(query, (path, media_type, scraper, 1))
+            path_id = self.cursor.lastrowid
         return path_id
 
     def get_path(self, path):
@@ -103,27 +77,25 @@ class KodiMovies(object):
 
     def add_file(self, filename, path_id, dateAdded):
 
-        query = ' '.join((
-
-            "SELECT idFile",
-            "FROM files",
-            "WHERE strFilename = ?",
-            "AND idPath = ?"
-        ))
+        query = '''
+            SELECT idFile FROM files
+            WHERE strFilename = ?
+            AND idPath = ?
+        '''
         self.cursor.execute(query, (filename, path_id,))
         try:
             file_id = self.cursor.fetchone()[0]
         except TypeError:
             # Create a new entry
-            file_id = self.create_entry_file()
             query = (
                 '''
-                INSERT INTO files(idFile, idPath, strFilename, dateAdded)
+                INSERT INTO files(idPath, strFilename, dateAdded)
 
-                VALUES (?, ?, ?, ?)
+                VALUES (?, ?, ?)
                 '''
             )
-            self.cursor.execute(query, (file_id, path_id, filename, dateAdded))
+            self.cursor.execute(query, (path_id, filename, dateAdded))
+            file_id = self.cursor.lastrowid
 
         return file_id
 
@@ -166,27 +138,8 @@ class KodiMovies(object):
 
         return filename
 
-
-    def create_entry_rating(self):
-        self.cursor.execute("select coalesce(max(rating_id),0) from rating")
-        kodi_id = self.cursor.fetchone()[0] + 1
-
-        return kodi_id
-
     def create_entry(self):
         self.cursor.execute("select coalesce(max(idMovie),0) from movie")
-        kodi_id = self.cursor.fetchone()[0] + 1
-
-        return kodi_id
-
-    def create_entry_set(self):
-        self.cursor.execute("select coalesce(max(idSet),0) from sets")
-        kodi_id = self.cursor.fetchone()[0] + 1
-
-        return kodi_id
-
-    def create_entry_country(self):
-        self.cursor.execute("select coalesce(max(country_id),0) from country")
         kodi_id = self.cursor.fetchone()[0] + 1
 
         return kodi_id
@@ -234,8 +187,8 @@ class KodiMovies(object):
 
             "UPDATE movie",
             "SET c00 = ?, c01 = ?, c02 = ?, c03 = ?, c04 = ?, c05 = ?, c06 = ?,",
-                "c07 = ?, c09 = ?, c10 = ?, c11 = ?, c12 = ?, c14 = ?, c15 = ?,",
-                "c16 = ?, c18 = ?, c19 = ?, c21 = ?, premiered = ?",
+            "c07 = ?, c09 = ?, c10 = ?, c11 = ?, c12 = ?, c14 = ?, c15 = ?,",
+            "c16 = ?, c18 = ?, c19 = ?, c21 = ?, premiered = ?",
             "WHERE idMovie = ?"
         ))
         self.cursor.execute(query, (args))
@@ -243,47 +196,39 @@ class KodiMovies(object):
     def add_genres(self, kodi_id, genres, media_type):
     
         # Delete current genres for clean slate
-        query = ' '.join((
-
-            "DELETE FROM genre_link",
-            "WHERE media_id = ?",
-            "AND media_type = ?"
-        ))
+        query = '''
+            DELETE FROM genre_link
+            WHERE media_id = ?
+            AND media_type = ?
+        '''
         self.cursor.execute(query, (kodi_id, media_type,))
 
         # Add genres
         for genre in genres:
-
             genre_id = self._get_genre(genre)
             query = (
                 '''
                 INSERT OR REPLACE INTO genre_link(
                     genre_id, media_id, media_type)
-
                 VALUES (?, ?, ?)
                 '''
             )
             self.cursor.execute(query, (genre_id, kodi_id, media_type))
-        
 
     def _add_genre(self, genre):
-
-        genre_id = self.create_entry_genre()
-        query = "INSERT INTO genre(genre_id, name) values(?, ?)"
-        self.cursor.execute(query, (genre_id, genre))
+        query = "INSERT INTO genre(name) values(?)"
+        self.cursor.execute(query, (genre))
         log.debug("Add Genres to media, processing: %s", genre)
 
-        return genre_id
+        return self.cursor.lastrowid
 
     def _get_genre(self, genre):
 
-        query = ' '.join((
-
-            "SELECT genre_id",
-            "FROM genre",
-            "WHERE name = ?",
-            "COLLATE NOCASE"
-        ))
+        query = '''SELECT genre_id
+            FROM genre
+            WHERE name = ?
+            COLLATE NOCASE
+        '''
         self.cursor.execute(query, (genre,))
 
         try:
@@ -303,20 +248,13 @@ class KodiMovies(object):
                 VALUES (?, ?, ?)
                 ''')
             self.cursor.execute(query, (studio_id, kodi_id, media_type))
-    def create_entry_studio(self):
-        self.cursor.execute("select coalesce(max(studio_id),0) from studio")
-        kodi_id = self.cursor.fetchone()[0] + 1
-
-        return kodi_id
 
     def _add_studio(self, studio):
-
-        studio_id = self.create_entry_studio()
-        query = "INSERT INTO studio(studio_id, name) values(?, ?)"
-        self.cursor.execute(query, (studio_id, studio))
+        query = "INSERT INTO studio(name) values(?)"
+        self.cursor.execute(query, (studio))
         log.debug("Add Studios to media, processing: %s", studio)
 
-        return studio_id
+        return self.cursor.lastrowid
 
     def _get_studio(self, studio):
 
@@ -351,15 +289,20 @@ class KodiMovies(object):
         return ratingid
 
     def add_ratings(self, *args):
+        '''
+            takes (media_id, media_type, rating_type, rating, votes)
+            returns new rating_id
+        '''
         query = (
             '''
             INSERT INTO rating(
-                rating_id, media_id, media_type, rating_type, rating, votes)
+                media_id, media_type, rating_type, rating, votes)
 
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?)
             '''
         )
         self.cursor.execute(query, (args))
+        return self.cursor.lastrowid
 
     def update_ratings(self, *args):
         query = ' '.join((
@@ -371,7 +314,6 @@ class KodiMovies(object):
         self.cursor.execute(query, (args))
 
     def get_uniqueid(self, media_id):
-
         query = "SELECT uniqueid_id FROM uniqueid WHERE media_id = ?"
         self.cursor.execute(query, (media_id,))
         try:
@@ -382,15 +324,21 @@ class KodiMovies(object):
         return uniqueid
 
     def add_uniqueid(self, *args):
+        '''
+         takes (media_id, media_type, value, type)
+         returns uniqueid_id
+
+        '''
         query = (
             '''
             INSERT INTO uniqueid(
-                uniqueid_id, media_id, media_type, value, type)
+                media_id, media_type, value, type)
 
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?)
             '''
         )
         self.cursor.execute(query, (args))
+        return self.cursor.lastrowid
 
     def update_uniqueid(self, *args):
         query = ' '.join((
@@ -416,12 +364,11 @@ class KodiMovies(object):
 
     def _add_country(self, country):
 
-        country_id = self.create_entry_country()
-        query = "INSERT INTO country(country_id, name) values(?, ?)"
-        self.cursor.execute(query, (country_id, country))
+        query = "INSERT INTO country(name) values(?)"
+        self.cursor.execute(query, (country))
         log.debug("Add country to media, processing: %s", country)
 
-        return country_id
+        return self.cursor.lastrowid
 
     def _get_country(self, country):
         query = ' '.join((

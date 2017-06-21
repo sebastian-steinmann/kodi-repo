@@ -80,12 +80,11 @@ class Movies(object):
                 country, year, movieid)
         else:
             #add ratings
-            ratingid = self.kodi_db.create_entry_rating()
-            self.kodi_db.add_ratings(ratingid, movieid, "movie", "default", rating, votecount)
+            ratingid = self.kodi_db.add_ratings(movieid, "movie", "default", rating, votecount)
 
             # add unique id
             uniqueid = self.kodi_db.create_entry_uniqueid()
-            self.kodi_db.add_uniqueid(uniqueid, movieid, "movie", imdb, "imdb")
+            uniqueid = self.kodi_db.add_uniqueid(movieid, "movie", imdb, "imdb")
 
             #add path
             pathid = self.kodi_db.add_path(self.get_full_path(folder), "movies", "metadata.local")

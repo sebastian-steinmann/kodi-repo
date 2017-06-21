@@ -4,11 +4,7 @@
 
 import logging
 import sqlite3
-import sys
 import xbmc
-import xbmcgui
-import xbmcplugin
-import xbmcvfs
 
 from resources.lib.util import window
 
@@ -41,13 +37,13 @@ def kodi_commit():
 
         if count == 10:
             log.info("flag still active, but will try to commit")
-            window('emby_kodiScan', clear=True)
+            window('dings_kodiScan', clear=True)
 
         elif xbmc.Monitor().abortRequested() or xbmc.Monitor().waitForAbort(1):
             log.info("commit unsuccessful. sync terminating")
             return False
 
-        kodi_scan = window('emby_kodiScan') == "true"
+        kodi_scan = window('dings_kodiScan') == "true"
         count += 1
 
     return True
@@ -56,19 +52,17 @@ def kodi_commit():
 class DatabaseConn(object):
     # To be called as context manager - i.e. with DatabaseConn() as conn: #dostuff
 
-    def __init__(self, database_file="video", commit_on_close=True, timeout=120):
+    def __init__(self, commit_on_close=True, timeout=120):
         """
         database_file can be custom: emby, texture, music, video, :memory: or path to the file
         commit_mode set to None to autocommit (isolation_level). See python documentation.
         """
-        self.db_file = database_file
+        self.path = video_database()
         self.commit_on_close = commit_on_close
         self.timeout = timeout
 
     def __enter__(self):
         # Open the connection
-        self.path = self._SQL(self.db_file)
-
         self.conn = sqlite3.connect(self.path, isolation_level=None, timeout=self.timeout)
 
         log.info("opened: %s - %s", self.path, id(self.conn))
@@ -77,10 +71,6 @@ class DatabaseConn(object):
         return self.cursor
 
     def _SQL(self, media_type):
-
-        databases = {
-            'video': video_database
-        }
         return video_database()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -93,8 +83,7 @@ class DatabaseConn(object):
 
         if self.commit_on_close == True and changes:
             log.info("number of rows updated: %s", changes)
-            if self.db_file == "video":
-                kodi_commit()
+            kodi_commit() # Wait til end
             self.conn.commit()
             log.info("commit: %s", self.path)
 

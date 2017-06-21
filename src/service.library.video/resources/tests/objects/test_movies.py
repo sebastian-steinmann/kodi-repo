@@ -58,8 +58,8 @@ class MoviesTests(unittest.TestCase):
 
         kodi_db_mock.get_movie_from_imdb.return_value = None
         kodi_db_mock.create_entry.return_value = movieid
-        kodi_db_mock.create_entry_rating.return_value = rating_id
-        kodi_db_mock.create_entry_uniqueid.return_value = uniqueid
+        kodi_db_mock.add_rating.return_value = rating_id
+        kodi_db_mock.add_uniqueid.return_value = uniqueid
 
         movies = Movies(MagicMock())
 
@@ -89,9 +89,9 @@ class MoviesTests(unittest.TestCase):
         })
 
         kodi_db_mock.create_entry.assert_called_with()
-        kodi_db_mock.add_ratings.assert_called_with(rating_id, movieid, "movie", "default", rating, votecount)
+        kodi_db_mock.add_ratings.assert_called_with(movieid, "movie", "default", rating, votecount)
 
-        kodi_db_mock.add_uniqueid.assert_called_with(uniqueid, movieid, "movie", imdb_id, "imdb")
+        kodi_db_mock.add_uniqueid.assert_called_with(movieid, "movie", imdb_id, "imdb")
 
     @patch('resources.lib.objects.movies.settings', side_effect=fakeSettings)
     @patch('resources.lib.objects.movies.KodiMovies')

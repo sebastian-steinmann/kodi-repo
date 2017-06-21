@@ -10,8 +10,6 @@ from resources.lib.objects.movies import Movies
 import resources.lib.objects.database as database
 from resources.lib.util import window, settings
 
-
-
 loghandler.config()
 log = logging.getLogger("DINGS.service") # pylint: disable=invalid-name
 
@@ -29,7 +27,7 @@ class Service(object):
         while not self.monitor.abortRequested():
             self.update()
             # Sleep/wait for abort for 10 seconds
-            if self.monitor.waitForAbort(100):
+            if self.monitor.waitForAbort(30):
                 # Abort was requested while waiting. We should exit
                 break
 
@@ -37,22 +35,21 @@ class Service(object):
 
     def update(self):
         """ Check if any new movies """
-        window("dings_kodiscan", "true")
         if not self.monitor.abortRequested():
             count = 0
             all_movies = self.api.get_all_movies()
             total = len(all_movies)
             log.info("Fant %s filmer, oppdaterer %s", total, time.time())
-            
-            for movie in self.added(all_movies):
-                with database.DatabaseConn('video') as cursor_video:
-                    movies_db = Movies(cursor_video)
+            with database.DatabaseConn() as cursor_video:
+                window("dings_kodiscan", "true")
+                movies_db = Movies(cursor_video)
+                for movie in self.added(all_movies):
                     movies_db.update(movie)
                     log.info("La til filmen %s id: %s", movie.get('title'), movie.get('imdb'))
                     count += 1
+                window("dings_kodiscan", clear=True)
 
             log.info("%s av %s filmer lagt til", count, total)
-        window("dings_kodiscan", clear=True)
 
     def added(self, items):
         """ Handler to check abort, and to show notifications """
