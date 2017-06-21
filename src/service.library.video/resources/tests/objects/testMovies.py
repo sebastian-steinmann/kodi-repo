@@ -9,7 +9,8 @@ def fakeSettings(key):
     settings = {
         'username': 'myusername',
         'password': 'password',
-        'host': 'http://host.no'
+        'host': 'http://host.no',
+        'endpoint': 'http://host.no'
     }
     return settings[key]
 
@@ -40,7 +41,7 @@ class MoviesTests(unittest.TestCase):
     def test_should_get_fullpath_from_settings(self, kodiMoviesMock, settingsMock):
         movies = Movies(None)
         full_path = movies.get_full_path("testFolder")
-        self.assertEqual("https://myusername:password@mediavault.thorarne.no/movies/testFolder", full_path)
+        self.assertEqual("http://myusername:password@host.no/movies/testFolder", full_path)
 
 
     @patch('resources.lib.objects.movies.settings', side_effect=fakeSettings)
