@@ -4,5 +4,6 @@
     <string id="70000">Connection settings</string>
     <string id="70001">Host:port</string>
     <string id="70002">Username</string>
-    <string id="70004">Password</string>
+    <string id="70003">Password</string>
+    <string id="70004">Endpoint</string>
 </strings>

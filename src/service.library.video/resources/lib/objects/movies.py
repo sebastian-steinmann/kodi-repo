@@ -24,7 +24,7 @@ class Movies(object):
 
     def get_full_path(self, folder):
         """ Add host, username and password to folderpath """
-        url_parts = urlparse("https://mediavault.thorarne.no")
+        url_parts = urlparse(settings("endpoint"))
         return "%s://%s:%s@%s%s/movies/%s" % (
             url_parts.scheme,
             settings("username"),
