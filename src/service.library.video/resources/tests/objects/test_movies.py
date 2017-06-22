@@ -3,7 +3,7 @@
 import unittest
 from resources.lib.objects.movies import Movies
 
-from mock import MagicMock, patch
+from mock import MagicMock, patch, ANY
 
 def fakeSettings(key):
     settings = {
@@ -62,8 +62,7 @@ class MoviesTests(unittest.TestCase):
         kodi_db_mock.add_uniqueid.return_value = uniqueid
 
         movies = Movies(MagicMock())
-
-        movies.update({
+        movie = {
             "id": "1",
             "title": "Filmnavn",
             "folder": "filnavn.720p",
@@ -80,18 +79,24 @@ class MoviesTests(unittest.TestCase):
             "year": "",
             "imdb": imdb_id,
             "sorttitle": "",
-            "runtime": "",
+            "runtime": "100",
             "mpaa": "pg13",
             "country": "",
             "studios": [""],
             "trailer": "http:",
-            "boxset": "2"
-        })
+            "boxset": "2",
+            "actors": ["Actor 1"]
+        }
+        movies.update(movie)
 
         kodi_db_mock.create_entry.assert_called_with()
         kodi_db_mock.add_ratings.assert_called_with(movieid, "movie", "default", rating, votecount)
 
         kodi_db_mock.add_uniqueid.assert_called_with(movieid, "movie", imdb_id, "imdb")
+        kodi_db_mock.add_movie.assert_called_with(ANY, ANY, ANY, ANY, None, None,
+                            ANY, ANY, ANY, ANY, ANY, ANY,
+                            int(movie.get('runtime')) * 60, ANY, ANY, ANY, ANY, None, None,
+                            ANY, ANY, ANY, ANY)
 
     @patch('resources.lib.objects.movies.settings', side_effect=fakeSettings)
     @patch('resources.lib.objects.movies.KodiMovies')
@@ -126,15 +131,14 @@ class MoviesTests(unittest.TestCase):
             "year": "",
             "imdb": imdb_id,
             "sorttitle": "",
-            "runtime": "",
+            "runtime": "104",
             "mpaa": "pg13",
             "country": "",
             "studios": [""],
             "trailer": "http:",
-            "boxset": "2"
+            "boxset": "2",
+            "actors": ["Actor 1"]
         }
-
-       
 
         kodi_db_mock.get_movie_from_imdb.return_value = [movieid, uniqueid, file_id]
         kodi_db_mock.get_ratingid.return_value = rating_id
@@ -145,3 +149,20 @@ class MoviesTests(unittest.TestCase):
         kodi_db_mock.update_movie.assert_called()
         kodi_db_mock.update_ratings.assert_called_with(movieid, "movie", "default", rating, votecount, rating_id)
         kodi_db_mock.update_path.assert_called_with(path_id, movies.get_full_path(movie.get('folder')), 'movies', 'metadata.local')
+
+        expected_people = [
+            {
+                'Name': movie.get('actors')[0],
+                'Type': 'Actor'
+            },
+            {
+                'Name': movie.get('writers')[0],
+                'Type': 'Writer'
+            },
+            {
+                'Name': movie.get('directors')[0],
+                'Type': 'Director'
+            }
+        ]
+
+        kodi_db_mock.add_people.assert_called_with(movieid, expected_people, 'movie')

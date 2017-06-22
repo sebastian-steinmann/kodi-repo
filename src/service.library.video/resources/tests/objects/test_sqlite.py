@@ -5,7 +5,7 @@ import sqlite3
 
 class TestSqlite(unittest.TestCase):
     def setUp(self):
-        self.db = sqlite3.connect("test.db", isolation_level=None)
+        self.db = sqlite3.connect(":memory:", isolation_level=None)
         self.cursor = self.db.cursor()
 
     def test_should_record_change(self):

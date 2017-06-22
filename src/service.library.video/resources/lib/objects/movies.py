@@ -47,7 +47,7 @@ class Movies(object):
         plot = movie.get("plot")
         writer = " / ".join(movie.get("writers"))
         year = movie.get("year")
-        runtime = movie.get("runtime")
+        runtime = int(movie.get("runtime")) * 60
         mpaa = movie.get("mpaa")
         genres = movie.get("genres")
         genre = " / ".join(genres)
@@ -63,21 +63,21 @@ class Movies(object):
         else:
             movieid, fileid, uniqueid = original_movie
 
-
+        full_path = self.get_full_path(folder)
+        
         if update:
             ratingid = self.kodi_db.get_ratingid(movieid)
 
             pathid = self.kodi_db.get_path_by_media_id(movieid)
-            log.info(pathid)
 
             self.kodi_db.update_ratings(movieid, 'movie', 'default', rating, votecount, ratingid)
-            self.kodi_db.update_path(pathid, self.get_full_path(folder), 'movies', 'metadata.local')
+            self.kodi_db.update_path(pathid, full_path, 'movies', 'metadata.local')
             self.kodi_db.update_file(fileid, filename, pathid, dateadded)
             self.kodi_db.update_movie(
                 title, plot, None, None,
                 votecount, uniqueid, writer, year, uniqueid, title,
                 runtime, mpaa, genre, director, title, None, None,
-                country, year, movieid)
+                country, year, full_path, pathid, movieid)
         else:
             #add ratings
             ratingid = self.kodi_db.add_ratings(movieid, "movie", "default", rating, votecount)
@@ -86,7 +86,7 @@ class Movies(object):
             uniqueid = self.kodi_db.add_uniqueid(movieid, "movie", imdb, "imdb")
 
             #add path
-            pathid = self.kodi_db.add_path(self.get_full_path(folder), "movies", "metadata.local")
+            pathid = self.kodi_db.add_path(full_path, "movies", "metadata.local")
             fileid = self.kodi_db.add_file(filename, pathid, dateadded)
 
             # Add the movie
@@ -94,8 +94,15 @@ class Movies(object):
                 movieid, fileid, title, plot, None, None,
                 votecount, uniqueid, writer, year, uniqueid, title,
                 runtime, mpaa, genre, director, title, None, None,
-                country, year)
-        
+                country, year, full_path, pathid)
+
         self.kodi_db.add_update_art(movie.get('poster'), movieid, 'movie', 'poster')
         self.kodi_db.add_update_art(movie.get('poster'), movieid, 'movie', 'thumb')
         self.kodi_db.add_genres(movieid, genres, "movie")
+
+        people = [{'Name': actor, 'Type': 'Actor'} for actor in movie.get('actors')]
+        people.extend([{'Name': writer, 'Type': 'Writer'} for writer in movie.get('writers')])
+        people.extend([
+            {'Name': director, 'Type': 'Director'} for director in movie.get('directors')])
+
+        self.kodi_db.add_people(movieid, people, 'movie')

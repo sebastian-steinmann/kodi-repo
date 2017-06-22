@@ -175,9 +175,9 @@ class KodiMovies(object):
             '''
             INSERT INTO movie(
                 idMovie, idFile, c00, c01, c02, c03, c04, c05, c06, c07,
-                c09, c10, c11, c12, c14, c15, c16, c18, c19, c21, premiered)
+                c09, c10, c11, c12, c14, c15, c16, c18, c19, c21, premiered, c22, c23)
 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             '''
         )
         self.cursor.execute(query, (args))
@@ -188,7 +188,7 @@ class KodiMovies(object):
             "UPDATE movie",
             "SET c00 = ?, c01 = ?, c02 = ?, c03 = ?, c04 = ?, c05 = ?, c06 = ?,",
             "c07 = ?, c09 = ?, c10 = ?, c11 = ?, c12 = ?, c14 = ?, c15 = ?,",
-            "c16 = ?, c18 = ?, c19 = ?, c21 = ?, premiered = ?",
+            "c16 = ?, c18 = ?, c19 = ?, c21 = ?, premiered = ?, c22 = ?, c23 = ?",
             "WHERE idMovie = ?"
         ))
         self.cursor.execute(query, (args))
@@ -430,3 +430,69 @@ class KodiMovies(object):
                         AND type = ?
                     '''
                     self.cursor.execute(query, (image_url, kodi_id, media_type, image_type))
+
+    def add_people(self, kodi_id, people, media_type):
+        def add_link(link_type, person_id, kodi_id, media_type):
+
+            query = (
+                "INSERT OR REPLACE INTO " + link_type + "(actor_id, media_id, media_type)"
+                "VALUES (?, ?, ?)"
+            )
+            self.cursor.execute(query, (person_id, kodi_id, media_type,))
+
+        cast_order = 1
+
+        for person in people:
+
+            name = person['Name']
+            type_ = person['Type']
+            person_id = self._get_person(name)
+
+            # Link person to content
+            if type_ == "Actor":
+                role = person.get('Role')
+                query = (
+                    '''
+                    INSERT OR REPLACE INTO actor_link(
+                        actor_id, media_id, media_type, role, cast_order)
+
+                    VALUES (?, ?, ?, ?, ?)
+                    '''
+                )
+                self.cursor.execute(query, (person_id, kodi_id, media_type, role, cast_order))
+                cast_order += 1
+
+            elif type_ == "Director":
+                add_link("director_link", person_id, kodi_id, media_type)
+
+            elif type_ in ("Writing", "Writer"):
+                add_link("writer_link", person_id, kodi_id, media_type)
+
+            elif type_ == "Artist":
+                add_link("actor_link", person_id, kodi_id, media_type)
+
+
+    def _add_person(self, name):
+        query = "INSERT INTO actor (name) values(?)"
+        self.cursor.execute(query, (name,))
+        log.debug("Add people to media, processing: %s", name)
+
+        return self.cursor.lastrowid
+
+    def _get_person(self, name):
+
+        query = ' '.join((
+
+            "SELECT actor_id",
+            "FROM actor",
+            "WHERE name = ?",
+            "COLLATE NOCASE"
+        ))
+        self.cursor.execute(query, (name,))
+
+        try:
+            person_id = self.cursor.fetchone()[0]
+        except TypeError:
+            person_id = self._add_person(name)
+
+        return person_id

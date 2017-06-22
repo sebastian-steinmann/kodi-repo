@@ -8,7 +8,7 @@ import resources.lib.loghandler as loghandler
 from resources.lib.service_api import Api
 from resources.lib.objects.movies import Movies
 import resources.lib.objects.database as database
-from resources.lib.util import window, settings
+from resources.lib.util import window, settings, sourcesXML
 
 loghandler.config()
 log = logging.getLogger("DINGS.service") # pylint: disable=invalid-name
@@ -40,6 +40,7 @@ class Service(object):
             all_movies = self.api.get_all_movies()
             total = len(all_movies)
             log.info("Fant %s filmer, oppdaterer %s", total, time.time())
+            sourcesXML()
             with database.DatabaseConn() as cursor_video:
                 window("dings_kodiscan", "true")
                 movies_db = Movies(cursor_video)
@@ -48,6 +49,7 @@ class Service(object):
                     log.info("La til filmen %s id: %s", movie.get('title'), movie.get('imdb'))
                     count += 1
                 window("dings_kodiscan", clear=True)
+                xbmc.executebuiltin('UpdateLibrary(video)')
 
             log.info("%s av %s filmer lagt til", count, total)
 
