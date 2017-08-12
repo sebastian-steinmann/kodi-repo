@@ -99,7 +99,7 @@ class Library(threading.Thread):
         Invokeds self._full_update if should_do_full_sync else _incremental_update()
         returns total, count
         """
-        force = True
+        force = False
         if force or self._should_do_full_sync():
             return self._full_update()
         return self._incremental_update()
