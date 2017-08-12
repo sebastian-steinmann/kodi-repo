@@ -1,8 +1,13 @@
- * Timestamp check
- * Skuespillere
- * Flere filmer med samme imdb_id
+ x Timestamp check
+ > Skuespillere
+ x Lagre lastFullSync
+ x Flere filmer med samme imdb_id
     * Releases
     * Språk
- * Fjerne filmer som ikke lenger ligger der
+ x Fjerne filmer som ikke lenger ligger der
  * SQL facade
+  * Lese settings
+  * Lage facade rundt vanlig SQL
+  * Velge riktig
  * Precache artwork
+ x Visuelle dialoger under scan

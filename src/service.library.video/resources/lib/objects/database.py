@@ -29,7 +29,7 @@ def video_database():
 
 def kodi_commit():
     # verification for the Kodi video scan
-    kodi_scan = window('dings_kodiScan') == "true"
+    kodi_scan = window('dings_kodiscan') == "true"
     count = 0
 
     while kodi_scan:
@@ -37,13 +37,13 @@ def kodi_commit():
 
         if count == 10:
             log.info("flag still active, but will try to commit")
-            window('dings_kodiScan', clear=True)
+            window('dings_kodiscan', clear=True)
 
         elif xbmc.Monitor().abortRequested() or xbmc.Monitor().waitForAbort(1):
             log.info("commit unsuccessful. sync terminating")
             return False
 
-        kodi_scan = window('dings_kodiScan') == "true"
+        kodi_scan = window('dings_kodiscan') == "true"
         count += 1
 
     return True
@@ -57,21 +57,20 @@ class DatabaseConn(object):
         database_file can be custom: emby, texture, music, video, :memory: or path to the file
         commit_mode set to None to autocommit (isolation_level). See python documentation.
         """
-        self.path = video_database()
+
         self.commit_on_close = commit_on_close
         self.timeout = timeout
 
     def __enter__(self):
         # Open the connection
-        self.conn = sqlite3.connect(self.path, isolation_level=None, timeout=self.timeout)
+        self.path = video_database()
+        self.conn = sqlite3.connect(self.path, timeout=self.timeout)
+        # self.conn.row_factory = sqlite3.Row
 
         log.info("opened: %s - %s", self.path, id(self.conn))
         self.cursor = self.conn.cursor()
 
         return self.cursor
-
-    def _SQL(self, media_type):
-        return video_database()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         # Close the connection

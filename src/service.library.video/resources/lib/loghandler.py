@@ -47,7 +47,6 @@ class LogHandler(logging.StreamHandler):
 class MyFormatter(logging.Formatter):
 
     def __init__(self, fmt="%(name)s -> %(message)s"):
-
         logging.Formatter.__init__(self, fmt)
 
     def format(self, record):

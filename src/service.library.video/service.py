@@ -2,4 +2,9 @@
 from resources.lib.service_entry import Service
 
 if __name__ == '__main__':
-    Service()
+    service = Service()
+
+    try:
+        service.run()
+    except Exception as e:
+        service.shutdown()

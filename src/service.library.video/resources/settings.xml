@@ -6,5 +6,6 @@
 		<setting id="username" label="70002" type="text" default="sebastian" />
 		<setting id="password" label="70003" type="text" option="hidden"  enable="!eq(-1,)"  default="dings12345" />
 		<setting type="sep" />
+		<setting label="70005" type="action" action="RunPlugin(plugin://service.library.video?mode=reset)" option="close" />
 	</category>
 </settings>

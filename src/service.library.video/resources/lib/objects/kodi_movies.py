@@ -5,7 +5,10 @@
 import logging
 import xbmc
 
-from resources.lib.util import window
+##################################################################################################
+
+from resources.lib.artwork import Artwork
+
 ##################################################################################################
 
 log = logging.getLogger("DINGS.db") # pylint: disable=invalid-name
@@ -18,37 +21,41 @@ class KodiMovies(object):
     def __init__(self, cursor):
         self.cursor = cursor
         self.kodi_version = int(xbmc.getInfoLabel('System.BuildVersion')[:2])
+        self.artwork = Artwork()
 
-    def add_path(self, path, media_type, scraper):
-        """ Adds path object """
+    def add_path(self, path, media_type, scraper, last_update):
+        """
+        Adds path object and returns new id
+        Arguments:
+        path: string, path of folder
+        media_type: enum('movie')
+        scraper: string,
+        last_update: date
+        """
         path_id = self.get_path(path)
         if path_id is None:
             # Create a new entry
             query = (
                 '''
-                INSERT INTO path(strPath, strContent, strScraper, noUpdate)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO path(strPath, strContent, strScraper, noUpdate, dateAdded)
+                VALUES (?, ?, ?, ?, ?)
                 '''
             )
-            self.cursor.execute(query, (path, media_type, scraper, 1))
+            self.cursor.execute(query, (path, media_type, scraper, 1, last_update))
             path_id = self.cursor.lastrowid
         return path_id
 
     def get_path(self, path):
-
-        query = ' '.join((
-
-            "SELECT idPath",
-            "FROM path",
-            "WHERE strPath = ?"
-        ))
+        query = '''
+            SELECT idPath
+            FROM path
+            WHERE strPath = ?
+        '''
         self.cursor.execute(query, (path,))
         try:
-            path_id = self.cursor.fetchone()[0]
+            return self.cursor.fetchone()[0]
         except TypeError:
-            path_id = None
-
-        return path_id
+            return None
 
     def get_path_by_media_id(self, file_id):
         ''' Returns path_id based on movie_id '''
@@ -63,64 +70,69 @@ class KodiMovies(object):
         except TypeError:
             return None
 
-    def update_path(self, path_id, path, media_type, scraper):
-
+    def update_path(self, path_id, path, media_type, scraper, last_update):
+        """
+        Updates path with new data
+        Arguments:
+        path_id: int, id of path to update
+        path: string, path of folder
+        media_type: enum('movie')
+        scraper: string,
+        last_update: date
+        """
         query = '''
             UPDATE path
-            SET strPath = ?, strContent = ?, strScraper = ?, noUpdate = ?
+            SET strPath = ?, strContent = ?, strScraper = ?, noUpdate = ?, dateAdded = ?
             WHERE idPath = ?
         '''
-        self.cursor.execute(query, (path, media_type, scraper, 1, path_id))
+        self.cursor.execute(query, (path, media_type, scraper, 1, last_update, path_id))
 
     def remove_path(self, path_id):
         self.cursor.execute("DELETE FROM path WHERE idPath = ?", (path_id,))
 
-    def add_file(self, filename, path_id, dateAdded):
-
+    def add_file(self, **kvargs):
+        """
+            Checks if file does not already excist and adds it, returns file_id
+            Arguments:
+            pathid: int
+            filename: filename without folder, inkluding file ending
+            dateadded: yyyy-mm-dd
+        """
         query = '''
             SELECT idFile FROM files
-            WHERE strFilename = ?
-            AND idPath = ?
+            WHERE strFilename = :filename
+            AND idPath = :pathid
         '''
-        self.cursor.execute(query, (filename, path_id,))
+        self.cursor.execute(query, kvargs)
         try:
-            file_id = self.cursor.fetchone()[0]
+            return self.cursor.fetchone()[0]
         except TypeError:
             # Create a new entry
             query = (
                 '''
                 INSERT INTO files(idPath, strFilename, dateAdded)
 
-                VALUES (?, ?, ?)
+                VALUES (:pathid, :filename, :dateadded)
                 '''
             )
-            self.cursor.execute(query, (path_id, filename, dateAdded))
-            file_id = self.cursor.lastrowid
+            self.cursor.execute(query, kvargs)
+            return self.cursor.lastrowid
 
-        return file_id
-
-    def update_file(self, file_id, filename, path_id, date_added):
-
-        query = ' '.join((
-
-            "UPDATE files",
-            "SET idPath = ?, strFilename = ?, dateAdded = ?",
-            "WHERE idFile = ?"
-        ))
-        self.cursor.execute(query, (path_id, filename, date_added, file_id))
-
-    def remove_file(self, path, filename):
-
-        path_id = self.get_path(path)
-        if path_id is not None:
-
-            query = ' '.join((
-
-                "DELETE FROM files",
-                "WHERE idPath = ?",
-                "AND strFilename = ?"
-            ))
-            self.cursor.execute(query, (path_id, filename,))
+    def update_file(self, **kvargs):
+        """
+            Updates the file with arguments
+            Arguments:
+            file_id: int
+            path_id: int
+            filename: filename without folder, inkluding file ending
+            dateadded: yyyy-mm-dd
+        """
+        query = '''
+            UPDATE files
+            SET idPath = :path_id, strFilename = :filename, dateAdded = :dateadded
+            WHERE idFile = :file_id
+        '''
+        self.cursor.execute(query, kvargs)
 
     def get_filename(self, file_id):
 
@@ -140,28 +152,42 @@ class KodiMovies(object):
 
     def create_entry(self):
         self.cursor.execute("select coalesce(max(idMovie),0) from movie")
-        kodi_id = self.cursor.fetchone()[0] + 1
-
-        return kodi_id
+        return self.cursor.fetchone()[0] + 1
 
     def get_movie(self, kodi_id):
-
         query = "SELECT * FROM movie WHERE idMovie = ?"
         self.cursor.execute(query, (kodi_id,))
         try:
-            kodi_id = self.cursor.fetchone()[0]
+            return self.cursor.fetchone()
         except TypeError:
-            kodi_id = None
+            return None
 
-        return kodi_id
-    
+    def get_movie_from_release(self, release_id):
+        query = ('''
+            SELECT movie.idMovie, movie.idFile, imdb_uid.uniqueid_id as imdb_uid, path.idPath, path.dateAdded, u.uniqueid_id from uniqueid u
+            LEFT JOIN movie on (u.media_id = movie.idMovie)
+			LEFT JOIN files on (files.idFile = movie.idFile)
+			LEFT JOIN path on (path.idPath = files.idPath)
+            LEFT JOIN uniqueid imdb_uid on (imdb_uid.media_type = 'movie' and imdb_uid.type = 'imdb' and imdb_uid.media_id = movie.idMovie)
+            WHERE u.media_type = 'movie' and u.type = 'release'
+            and u.value = ?
+        ''')
+        self.cursor.execute(query, (release_id,))
+        try:
+            return self.cursor.fetchone()
+        except TypeError:
+            return None
+
     def get_movie_from_imdb(self, imdb_id):
 
         query = ('''
-            SELECT movie.idMovie, movie.idFile, u.uniqueid_id from uniqueid u
+            SELECT movie.idMovie, movie.idFile, u.uniqueid_id as imdb_uid, path.idPath, path.dateAdded, null as uniqueid_id from uniqueid u
             LEFT JOIN movie on (u.media_id = movie.idMovie)
+			LEFT JOIN files on (files.idFile = movie.idFile)
+			LEFT JOIN path on (path.idPath = files.idPath)
+            LEFT JOIN uniqueid release_uid on (release_uid.media_type = 'movie' and release_uid.type = 'release' and release_uid.media_id = movie.idMovie)
             WHERE u.media_type = 'movie' and u.type in ('unknown', 'imdb')
-            and u.value = ?
+            and u.value = ? and release_uid.uniqueid_id is null
         ''')
         self.cursor.execute(query, (imdb_id,))
         try:
@@ -169,32 +195,128 @@ class KodiMovies(object):
         except TypeError:
             return None
 
-    def add_movie(self, *args):
-        # Create the movie entry
+    def add_movie(self, **kvargs):
+        '''
+            Create the movie entry
+            Arguments
+            movieid: int
+            fileid: int
+            :title,
+            :plot,
+            None,
+            None,
+            :votecount,
+            :uniqueid,
+            :writers,
+            :year,
+            :imdb,
+            :title,
+            :runtime,
+            :mpaa,
+            :genres,
+            :directors,
+            :title,
+            None,
+            None,
+            :country,
+            :released,
+            :path,
+            :pathid
+        '''
+
         query = (
             '''
             INSERT INTO movie(
                 idMovie, idFile, c00, c01, c02, c03, c04, c05, c06, c07,
                 c09, c10, c11, c12, c14, c15, c16, c18, c19, c21, premiered, c22, c23)
 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (
+                :movieid,
+                :fileid,
+                :title,
+                :plot,
+                :shortplot,
+                :tagline,
+                :votecount,
+                :uniqueid,
+                :writers,
+                :year,
+                :imdb,
+                :title,
+                :runtime,
+                :mpaa,
+                :genres,
+                :directors,
+                :title,
+                :studio,
+                :trailer,
+                :country,
+                :released,
+                :path,
+                :pathid
+                )
             '''
         )
-        self.cursor.execute(query, (args))
+        self.cursor.execute(query, kvargs)
 
-    def update_movie(self, *args):
-        query = ' '.join((
+    def update_movie(self, **kvargs):
+        '''
+            Update the movie entry
+            movieid: kodi-id
+            movie: [
+                title,
+                plot,
+                None,
+                None,
+                votecount,
+                uniqueid,
+                writers,
+                year,
+                imdb,
+                title,
+                runtime in seconds,
+                mpaa,
+                genres,
+                directors,
+                title,
+                None,
+                None,
+                country,
+                released,
+                full_path,
+                pathid
+            ]
+        '''
 
-            "UPDATE movie",
-            "SET c00 = ?, c01 = ?, c02 = ?, c03 = ?, c04 = ?, c05 = ?, c06 = ?,",
-            "c07 = ?, c09 = ?, c10 = ?, c11 = ?, c12 = ?, c14 = ?, c15 = ?,",
-            "c16 = ?, c18 = ?, c19 = ?, c21 = ?, premiered = ?, c22 = ?, c23 = ?",
-            "WHERE idMovie = ?"
-        ))
-        self.cursor.execute(query, (args))
+        query = '''
+            UPDATE movie
+            SET c00 = :title,
+            c01 = :plot,
+            c02 = :shortplot,
+            c03 = :tagline,
+            c04 = :votecount,
+            c05 = :uniqueid,
+            c06 = :writers,
+            c07 = :year,
+            c09 = :imdb,
+            c10 = :title,
+            c11 = :runtime,
+            c12 = :mpaa,
+            c14 = :genres,
+            c15 = :directors,
+            c16 = :title,
+            c18 = :studio,
+            c19 = :trailer,
+            c21 = :country,
+            premiered = :released,
+            c22 = :path,
+            c23 = :pathid
+            WHERE idMovie = :movieid
+        '''
+        self.cursor.execute(query, kvargs)
 
     def add_genres(self, kodi_id, genres, media_type):
-    
+
         # Delete current genres for clean slate
         query = '''
             DELETE FROM genre_link
@@ -217,14 +339,15 @@ class KodiMovies(object):
 
     def _add_genre(self, genre):
         query = "INSERT INTO genre(name) values(?)"
-        self.cursor.execute(query, (genre))
+        self.cursor.execute(query, (genre,))
         log.debug("Add Genres to media, processing: %s", genre)
 
         return self.cursor.lastrowid
 
     def _get_genre(self, genre):
 
-        query = '''SELECT genre_id
+        query = '''
+            SELECT genre_id
             FROM genre
             WHERE name = ?
             COLLATE NOCASE
@@ -288,30 +411,43 @@ class KodiMovies(object):
 
         return ratingid
 
-    def add_ratings(self, *args):
-        '''
-            takes (media_id, media_type, rating_type, rating, votes)
-            returns new rating_id
-        '''
+    def add_ratings(self, **kvargs):
+        """
+            Adds a new rating record and returns the id
+            Arguments as kvargs:
+            movieid: int
+            media_type: enum('movie')
+            rating_type: enum('default')
+            rating: double
+            votecount: int
+        """
         query = (
             '''
             INSERT INTO rating(
                 media_id, media_type, rating_type, rating, votes)
 
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (:movieid, :media_type, :rating_type, :rating, :votecount)
             '''
         )
-        self.cursor.execute(query, (args))
+        self.cursor.execute(query, kvargs)
         return self.cursor.lastrowid
 
-    def update_ratings(self, *args):
-        query = ' '.join((
-
-            "UPDATE rating",
-            "SET media_id = ?, media_type = ?, rating_type = ?, rating = ?, votes = ?",
-            "WHERE rating_id = ?"
-        ))
-        self.cursor.execute(query, (args))
+    def update_ratings(self, **kvargs):
+        """
+            Adds a new rating record and returns the id
+            Arguments as kvargs:
+            ratingid: int
+            media_type: enum('movie')
+            rating_type: enum('default')
+            rating: double
+            votecount: int
+        """
+        query = '''
+            UPDATE rating
+            SET media_type = :media_type, rating_type = :rating_type, rating = :rating, votes = :votecount
+            WHERE rating_id = :ratingid
+        '''
+        self.cursor.execute(query, kvargs)
 
     def get_uniqueid(self, media_id):
         query = "SELECT uniqueid_id FROM uniqueid WHERE media_id = ?"
@@ -323,21 +459,24 @@ class KodiMovies(object):
 
         return uniqueid
 
-    def add_uniqueid(self, *args):
-        '''
-         takes (media_id, media_type, value, type)
-         returns uniqueid_id
-
-        '''
+    def add_uniqueid(self, **kvargs):
+        """
+            Adds a refrence between a movie and external id and returns the new id
+            Arguments
+            movieid: int
+            media_type: enum('movie')
+            value: int, external id
+            type: type of external id
+        """
         query = (
             '''
             INSERT INTO uniqueid(
                 media_id, media_type, value, type)
 
-            VALUES (?, ?, ?, ?)
+            VALUES (:movieid, :media_type, :value, :type)
             '''
         )
-        self.cursor.execute(query, (args))
+        self.cursor.execute(query, kvargs)
         return self.cursor.lastrowid
 
     def update_uniqueid(self, *args):
@@ -363,7 +502,6 @@ class KodiMovies(object):
             self.cursor.execute(query, (country_id, kodi_id, "movie"))
 
     def _add_country(self, country):
-
         query = "INSERT INTO country(name) values(?)"
         self.cursor.execute(query, (country))
         log.debug("Add country to media, processing: %s", country)
@@ -371,26 +509,22 @@ class KodiMovies(object):
         return self.cursor.lastrowid
 
     def _get_country(self, country):
-        query = ' '.join((
-
-            "SELECT country_id",
-            "FROM country",
-            "WHERE name = ?",
-            "COLLATE NOCASE"
-        ))
+        query = '''
+            SELECT country_id
+            FROM country
+            WHERE name = ?
+            COLLATE NOCASE
+        '''
         self.cursor.execute(query, (country,))
         try:
-            country_id = self.cursor.fetchone()[0]
+            return self.cursor.fetchone()[0]
         except TypeError:
-            country_id = self._add_country(country)
-
-        return country_id
+            return self._add_country(country)
 
     def add_update_art(self, image_url, kodi_id, media_type, image_type):
         # Possible that the imageurl is an empty string
         if image_url:
-
-            cache_image = False
+            cache_image = True
 
             query = '''
                 SELECT url FROM art
@@ -431,26 +565,40 @@ class KodiMovies(object):
                     '''
                     self.cursor.execute(query, (image_url, kodi_id, media_type, image_type))
 
-    def add_people(self, kodi_id, people, media_type):
-        def add_link(link_type, person_id, kodi_id, media_type):
+            if cache_image and image_type in ("fanart", "poster"):
+                self.artwork.cache_texture(image_url)
 
+    def add_people(self, kodi_id, people, media_type):
+
+        def add_thumbnail(person_id, person, type_):
+            if 'imageurl' in person:
+                thumbnail = person['imageurl']
+                art = type_.lower()
+                if "writing" in art:
+                    art = "writer"
+
+                self.add_update_art(thumbnail, person_id, art, "thumb")
+
+        def add_link(link_type, person_id, kodi_id, media_type):
             query = (
                 "INSERT OR REPLACE INTO " + link_type + "(actor_id, media_id, media_type)"
                 "VALUES (?, ?, ?)"
             )
             self.cursor.execute(query, (person_id, kodi_id, media_type,))
 
-        cast_order = 1
+        cast_order = 0
 
         for person in people:
 
             name = person['Name']
             type_ = person['Type']
-            person_id = self._get_person(name)
+            thumb_url = person.get('imageurl', "")
+
+            person_id = self._get_person(name, thumb_url)
 
             # Link person to content
             if type_ == "Actor":
-                role = person.get('Role')
+                role = ""
                 query = (
                     '''
                     INSERT OR REPLACE INTO actor_link(
@@ -471,28 +619,38 @@ class KodiMovies(object):
             elif type_ == "Artist":
                 add_link("actor_link", person_id, kodi_id, media_type)
 
+            add_thumbnail(person_id, person, type_)
 
-    def _add_person(self, name):
-        query = "INSERT INTO actor (name) values(?)"
-        self.cursor.execute(query, (name,))
+
+    def _add_person(self, name, thumb_url):
+        query = "INSERT INTO actor (name, art_urls) values(?, ?)"
+        art_urls = "<thumb>%s</thumb>" % thumb_url
+        self.cursor.execute(query, (name,art_urls,))
         log.debug("Add people to media, processing: %s", name)
 
         return self.cursor.lastrowid
 
-    def _get_person(self, name):
-
-        query = ' '.join((
-
-            "SELECT actor_id",
-            "FROM actor",
-            "WHERE name = ?",
-            "COLLATE NOCASE"
-        ))
+    def _get_person(self, name, thumb_url):
+        query = '''
+            SELECT actor_id
+            FROM actor
+            WHERE name = ?
+            COLLATE NOCASE
+        '''
         self.cursor.execute(query, (name,))
 
         try:
-            person_id = self.cursor.fetchone()[0]
+            return self.cursor.fetchone()[0]
         except TypeError:
-            person_id = self._add_person(name)
+            return self._add_person(name, thumb_url)
 
-        return person_id
+    def get_movie_refs(self):
+        ''' retrives a list of movierefs that has a release refrence to dings '''
+        query = '''
+            select media_id, value, movie.c00, movie.idFile from uniqueid uid
+            left join movie on (movie.idMovie = uid.media_id)
+            where uid.type='release' and uid.media_type='movie'
+        '''
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+

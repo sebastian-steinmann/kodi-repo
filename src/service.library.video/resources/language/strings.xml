@@ -6,4 +6,6 @@
     <string id="70002">Username</string>
     <string id="70003">Password</string>
     <string id="70004">Endpoint</string>
+
+    <string id="70005">Reset last update</string>
 </strings>
