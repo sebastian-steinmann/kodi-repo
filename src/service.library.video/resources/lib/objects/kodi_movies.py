@@ -23,25 +23,23 @@ class KodiMovies(object):
         self.kodi_version = int(xbmc.getInfoLabel('System.BuildVersion')[:2])
         self.artwork = Artwork()
 
-    def add_path(self, path, media_type, scraper, last_update):
+    def add_path(self, full_path, last_update, version, **kvargs):
         """
         Adds path object and returns new id
         Arguments:
         path: string, path of folder
-        media_type: enum('movie')
-        scraper: string,
         last_update: date
         """
-        path_id = self.get_path(path)
+        path_id = self.get_path(full_path)
         if path_id is None:
             # Create a new entry
             query = (
                 '''
-                INSERT INTO path(strPath, strContent, strScraper, noUpdate, dateAdded)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO path(strPath, strContent, strScraper, noUpdate, strHash, dateAdded)
+                VALUES (?, ?, ?, ?, ?, ?)
                 '''
             )
-            self.cursor.execute(query, (path, media_type, scraper, 1, last_update))
+            self.cursor.execute(query, (full_path, 'movies', 'metadata.local', 1, version, last_update))
             path_id = self.cursor.lastrowid
         return path_id
 
@@ -57,35 +55,20 @@ class KodiMovies(object):
         except TypeError:
             return None
 
-    def get_path_by_media_id(self, file_id):
-        ''' Returns path_id based on movie_id '''
-        query = '''
-            select idPath
-            from files
-            where idFile = ?
-        '''
-        self.cursor.execute(query, (file_id,))
-        try:
-            return self.cursor.fetchone()[0]
-        except TypeError:
-            return None
-
-    def update_path(self, path_id, path, media_type, scraper, last_update):
+    def update_path(self, pathid, full_path, last_update, version, **kvargs):
         """
         Updates path with new data
         Arguments:
         path_id: int, id of path to update
         path: string, path of folder
-        media_type: enum('movie')
-        scraper: string,
         last_update: date
         """
         query = '''
             UPDATE path
-            SET strPath = ?, strContent = ?, strScraper = ?, noUpdate = ?, dateAdded = ?
+            SET strPath = ?, strContent = ?, strScraper = ?, noUpdate = ?, dateAdded = ?, strHash = ?
             WHERE idPath = ?
         '''
-        self.cursor.execute(query, (path, media_type, scraper, 1, last_update, path_id))
+        self.cursor.execute(query, (full_path, 'movies', 'metadata.local', 1, last_update, version, pathid))
 
     def remove_path(self, path_id):
         self.cursor.execute("DELETE FROM path WHERE idPath = ?", (path_id,))
@@ -111,7 +94,6 @@ class KodiMovies(object):
             query = (
                 '''
                 INSERT INTO files(idPath, strFilename, dateAdded)
-
                 VALUES (:pathid, :filename, :dateadded)
                 '''
             )
@@ -122,15 +104,15 @@ class KodiMovies(object):
         """
             Updates the file with arguments
             Arguments:
-            file_id: int
-            path_id: int
+            fileid: int
+            pathid: int
             filename: filename without folder, inkluding file ending
             dateadded: yyyy-mm-dd
         """
         query = '''
             UPDATE files
-            SET idPath = :path_id, strFilename = :filename, dateAdded = :dateadded
-            WHERE idFile = :file_id
+            SET idPath = :pathid, strFilename = :filename, dateAdded = :dateadded
+            WHERE idFile = :fileid
         '''
         self.cursor.execute(query, kvargs)
 
@@ -164,7 +146,7 @@ class KodiMovies(object):
 
     def get_movie_from_release(self, release_id):
         query = ('''
-            SELECT movie.idMovie, movie.idFile, imdb_uid.uniqueid_id as imdb_uid, path.idPath, path.dateAdded, u.uniqueid_id from uniqueid u
+            SELECT movie.idMovie, movie.idFile, imdb_uid.uniqueid_id as imdb_uid, path.idPath, path.dateAdded, path.strHash, u.uniqueid_id from uniqueid u
             LEFT JOIN movie on (u.media_id = movie.idMovie)
 			LEFT JOIN files on (files.idFile = movie.idFile)
 			LEFT JOIN path on (path.idPath = files.idPath)
@@ -181,7 +163,7 @@ class KodiMovies(object):
     def get_movie_from_imdb(self, imdb_id):
 
         query = ('''
-            SELECT movie.idMovie, movie.idFile, u.uniqueid_id as imdb_uid, path.idPath, path.dateAdded, null as uniqueid_id from uniqueid u
+            SELECT movie.idMovie, movie.idFile, u.uniqueid_id as imdb_uid, path.idPath, path.dateAdded, path.strHash, null as uniqueid_id from uniqueid u
             LEFT JOIN movie on (u.media_id = movie.idMovie)
 			LEFT JOIN files on (files.idFile = movie.idFile)
 			LEFT JOIN path on (path.idPath = files.idPath)
@@ -198,30 +180,6 @@ class KodiMovies(object):
     def add_movie(self, **kvargs):
         '''
             Create the movie entry
-            Arguments
-            movieid: int
-            fileid: int
-            :title,
-            :plot,
-            None,
-            None,
-            :votecount,
-            :uniqueid,
-            :writers,
-            :year,
-            :imdb,
-            :title,
-            :runtime,
-            :mpaa,
-            :genres,
-            :directors,
-            :title,
-            None,
-            None,
-            :country,
-            :released,
-            :path,
-            :pathid
         '''
 
         query = (
@@ -239,20 +197,20 @@ class KodiMovies(object):
                 :tagline,
                 :votecount,
                 :uniqueid,
-                :writers,
+                :writers_list,
                 :year,
                 :imdb,
                 :title,
                 :runtime,
                 :mpaa,
-                :genres,
-                :directors,
+                :genres_list,
+                :directors_list,
                 :title,
                 :studio,
                 :trailer,
-                :country,
+                :country_list,
                 :released,
-                :path,
+                :full_path,
                 :pathid
                 )
             '''
@@ -263,29 +221,27 @@ class KodiMovies(object):
         '''
             Update the movie entry
             movieid: kodi-id
-            movie: [
-                title,
-                plot,
-                None,
-                None,
-                votecount,
-                uniqueid,
-                writers,
-                year,
-                imdb,
-                title,
-                runtime in seconds,
-                mpaa,
-                genres,
-                directors,
-                title,
-                None,
-                None,
-                country,
-                released,
-                full_path,
-                pathid
-            ]
+            title,
+            plot,
+            None,
+            None,
+            votecount,
+            uniqueid,
+            writers,
+            year,
+            imdb,
+            title,
+            runtime in seconds,
+            mpaa,
+            genres,
+            directors,
+            title,
+            None,
+            None,
+            country,
+            released,
+            full_path,
+            pathid
         '''
 
         query = '''
@@ -296,26 +252,26 @@ class KodiMovies(object):
             c03 = :tagline,
             c04 = :votecount,
             c05 = :uniqueid,
-            c06 = :writers,
+            c06 = :writers_list,
             c07 = :year,
             c09 = :imdb,
             c10 = :title,
             c11 = :runtime,
             c12 = :mpaa,
-            c14 = :genres,
-            c15 = :directors,
+            c14 = :genres_list,
+            c15 = :directors_list,
             c16 = :title,
             c18 = :studio,
             c19 = :trailer,
-            c21 = :country,
+            c21 = :country_list,
             premiered = :released,
-            c22 = :path,
+            c22 = :full_path,
             c23 = :pathid
             WHERE idMovie = :movieid
         '''
         self.cursor.execute(query, kvargs)
 
-    def add_genres(self, kodi_id, genres, media_type):
+    def add_genres(self, kodi_id, genres):
 
         # Delete current genres for clean slate
         query = '''
@@ -323,7 +279,7 @@ class KodiMovies(object):
             WHERE media_id = ?
             AND media_type = ?
         '''
-        self.cursor.execute(query, (kodi_id, media_type,))
+        self.cursor.execute(query, (kodi_id, 'movie',))
 
         # Add genres
         for genre in genres:
@@ -335,7 +291,7 @@ class KodiMovies(object):
                 VALUES (?, ?, ?)
                 '''
             )
-            self.cursor.execute(query, (genre_id, kodi_id, media_type))
+            self.cursor.execute(query, (genre_id, kodi_id, 'movie'))
 
     def _add_genre(self, genre):
         query = "INSERT INTO genre(name) values(?)"
@@ -416,8 +372,6 @@ class KodiMovies(object):
             Adds a new rating record and returns the id
             Arguments as kvargs:
             movieid: int
-            media_type: enum('movie')
-            rating_type: enum('default')
             rating: double
             votecount: int
         """
@@ -426,28 +380,26 @@ class KodiMovies(object):
             INSERT INTO rating(
                 media_id, media_type, rating_type, rating, votes)
 
-            VALUES (:movieid, :media_type, :rating_type, :rating, :votecount)
+            VALUES (:movieid, 'movie', 'default', :rating, :votecount)
             '''
         )
         self.cursor.execute(query, kvargs)
         return self.cursor.lastrowid
 
-    def update_ratings(self, **kvargs):
+    def update_ratings(self, rating, votecount, ratingid, **kvargs):
         """
             Adds a new rating record and returns the id
             Arguments as kvargs:
             ratingid: int
-            media_type: enum('movie')
-            rating_type: enum('default')
             rating: double
             votecount: int
         """
         query = '''
             UPDATE rating
-            SET media_type = :media_type, rating_type = :rating_type, rating = :rating, votes = :votecount
-            WHERE rating_id = :ratingid
+            SET media_type = 'movie', rating_type = 'default', rating = ?, votes = ?
+            WHERE rating_id = ?
         '''
-        self.cursor.execute(query, kvargs)
+        self.cursor.execute(query, (rating, votecount, ratingid,))
 
     def get_uniqueid(self, media_id):
         query = "SELECT uniqueid_id FROM uniqueid WHERE media_id = ?"
@@ -464,7 +416,6 @@ class KodiMovies(object):
             Adds a refrence between a movie and external id and returns the new id
             Arguments
             movieid: int
-            media_type: enum('movie')
             value: int, external id
             type: type of external id
         """
@@ -473,23 +424,13 @@ class KodiMovies(object):
             INSERT INTO uniqueid(
                 media_id, media_type, value, type)
 
-            VALUES (:movieid, :media_type, :value, :type)
+            VALUES (:movieid, 'movie', :value, :type)
             '''
         )
         self.cursor.execute(query, kvargs)
         return self.cursor.lastrowid
 
-    def update_uniqueid(self, *args):
-        query = ' '.join((
-
-            "UPDATE uniqueid",
-            "SET media_id = ?, media_type = ?, value = ?, type = ?",
-            "WHERE uniqueid_id = ?"
-        ))
-        self.cursor.execute(query, (args))
-
     def add_countries(self, kodi_id, countries):
-
         for country in countries:
             country_id = self._get_country(country)
 
@@ -521,10 +462,10 @@ class KodiMovies(object):
         except TypeError:
             return self._add_country(country)
 
-    def add_update_art(self, image_url, kodi_id, media_type, image_type):
+    def add_update_art(self, image_url, kodi_id, image_type, media_type):
         # Possible that the imageurl is an empty string
         if image_url:
-            cache_image = True
+            cache_image = False
 
             query = '''
                 SELECT url FROM art

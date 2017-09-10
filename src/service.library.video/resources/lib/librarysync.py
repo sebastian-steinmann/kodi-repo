@@ -32,10 +32,11 @@ class Library(threading.Thread):
     def __init__(self):
         self.__dict__ = self._shared_state
         self.monitor = xbmc.Monitor()
-        self.api = Api(settings("host"),
-            settings(
-                "username"), settings("password")
-            )
+        self.api = Api(
+            settings("host"),
+            settings("username"),
+            settings("password")
+        )
 
         threading.Thread.__init__(self)
 
@@ -45,7 +46,7 @@ class Library(threading.Thread):
         except Exception as e:
             log.exception(e)
         finally:
-            window("dings_kodiscan", "true")
+            window("dings_kodiscan", clear=True)
             if self.pdialog:
                 self.pdialog.close()
             self.monitor = None
@@ -75,7 +76,6 @@ class Library(threading.Thread):
             start_time = datetime.now()
 
             total, count = self.update()
-            log.debug("Exiting, lets save")
             if not self._should_stop():
                 self.set_last_sync(start_time)
 
@@ -121,7 +121,7 @@ class Library(threading.Thread):
     def _full_update(self):
         start_time = datetime.now()
         all_movies = self.api.get_all_movies()
-        total, count = self._do_update(all_movies[:100], FullMovieUpdater)
+        total, count = self._do_update(all_movies, FullMovieUpdater)
 
         if not self._should_stop():
             self._delete_missing_movies(all_movies)

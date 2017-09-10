@@ -33,69 +33,67 @@ class Movies(object):
 
         return self._update(movie, original_movie)
 
-    def _update(self, movie, excisting_data):
-        movieid, fileid, imdb_uid, pathid, last_update, uniqueid = excisting_data
-        full_path = self._get_full_path(movie.get('folder'))
+    def _map_existing_data(self, movie_entity, excisting_data):
+        movieid, fileid, imdb_uid, pathid, last_update, content_version, uniqueid = excisting_data
+        movie_entity.update({
+            'movieid': movieid,
+            'fileid': fileid,
+            'imdb_uid': imdb_uid,
+            'pathid': pathid,
+            'uniqueid': uniqueid
+        })
+        return movie_entity, {
+            'version': content_version,
+            'last_update': last_update
+        }
 
-        if not self._should_update(last_update, movie):
+
+    def _update(self, movie, excisting_data):
+        movie_entity = self. _map_move_data(movie.copy())
+        movie_entity, org_movie = self._map_existing_data(movie_entity, excisting_data)
+
+        if not self._should_update(org_movie, movie_entity):
             return False
 
-        ratingid = self.kodi_db.get_ratingid(movieid)
+        movie_entity['full_path'] = self._get_full_path(movie.get('folder'))
 
-        if uniqueid is None:
-            uniqueid = self.kodi_db.add_uniqueid(
-                movieid=movieid, **self._get_release_unique_id(movie))
-        if imdb_uid is None:
-            imdb_uid = self.kodi_db.add_uniqueid(
-                movieid=movieid, **self._get_imdb_unique_id(movie))
+        movie_entity['ratingid'] = self.kodi_db.get_ratingid(movie_entity.get('movieid'))
 
-        self.kodi_db.update_ratings(
-            ratingid=ratingid, **self._get_ratings_data(movie))
-        self.kodi_db.update_path(
-            path_id=pathid, path=full_path, **self._get_path_data(movie))
-        self.kodi_db.update_file(
-            file_id=fileid, path_id=pathid, **self._get_file_data(movie))
+        if movie_entity.get('uniqueid') is None:
+            movie_entity['uniqueid'] = self.kodi_db.add_uniqueid(**self._get_release_unique_id(movie_entity))
+        if movie_entity.get('imdb_uid') is None:
+            movie_entity['imdb_uid'] = self.kodi_db.add_uniqueid(**self._get_imdb_unique_id(movie_entity))
 
-        self.kodi_db.update_movie(movieid=movieid,
-                                  uniqueid=uniqueid,
-                                  path=full_path,
-                                  pathid=pathid,
-                                  fileid=fileid,
-                                  **self._get_movie_data(movie))
+        self.kodi_db.update_ratings(**movie_entity)
+        self.kodi_db.update_path(**movie_entity)
+        self.kodi_db.update_file(**movie_entity)
 
-        self._add_or_update_meta(movieid, movie)
+        self.kodi_db.update_movie(**movie_entity)
+
+        self._add_or_update_meta(movie_entity)
         return True
 
     def _add(self, movie):
-        movieid = self.kodi_db.create_entry()
-        full_path = self._get_full_path(movie.get('folder'))
+        movie_entity = self. _map_move_data(movie.copy())
 
+        movie_entity['movieid'] = self.kodi_db.create_entry()
+        movie_entity['full_path'] = self._get_full_path(movie_entity.get('folder'))
         # add ratings
-        self.kodi_db.add_ratings(
-            movieid=movieid, **self._get_ratings_data(movie))
+        self.kodi_db.add_ratings(**movie_entity)
 
         # add imdb unique id for ref
-        self.kodi_db.add_uniqueid(
-            movieid=movieid, **self._get_imdb_unique_id(movie))
+        self.kodi_db.add_uniqueid(**self._get_imdb_unique_id(movie_entity))
         # add release id to support multiple releases of same movie
-        uniqueid = self.kodi_db.add_uniqueid(
-            movieid=movieid, **self._get_release_unique_id(movie))
+        movie_entity['uniqueid'] = self.kodi_db.add_uniqueid(**self._get_release_unique_id(movie_entity))
 
         # add path
-        pathid = self.kodi_db.add_path(
-            path=full_path, **self._get_path_data(movie))
-        fileid = self.kodi_db.add_file(pathid=pathid, **self._get_file_data(movie))
+        movie_entity['pathid'] = self.kodi_db.add_path(**movie_entity)
+        movie_entity['fileid'] = self.kodi_db.add_file(**movie_entity)
 
         # Add the movie
-        self.kodi_db.add_movie(
-            movieid=movieid,
-            uniqueid=uniqueid,
-            path=full_path,
-            pathid=pathid,
-            fileid=fileid,
-            **self._get_movie_data(movie))
+        self.kodi_db.add_movie(**movie_entity)
 
-        self._add_or_update_meta(movieid, movie)
+        self._add_or_update_meta(movie_entity)
         return True
 
     def _get_full_path(self, folder):
@@ -118,8 +116,8 @@ class Movies(object):
         return result
 
     def _add_people(self, movieid, movie):
-        thumb = 'https://images-na.ssl-images-amazon.com/images/M/MV5BMTg5ODk1NTc5Ml5BMl5BanBnXkFtZTYwMjAwOTI4._V1_UY317_CR6,0,214,317_AL_.jpg'
-        people = [{'Name': actor, 'Type': 'Actor', 'imageurl': thumb}
+        thumb = None
+        people = [{'Name': actor, 'Type': 'Actor'}
                   for actor in movie.get('actors')]
         people.extend([{'Name': writer, 'Type': 'Writer'}
                        for writer in movie.get('writers')])
@@ -128,30 +126,14 @@ class Movies(object):
 
         self.kodi_db.add_people(movieid, people, 'movie')
 
-    def _add_or_update_meta(self, movieid, movie):
+    def _add_or_update_meta(self, movie):
+        movieid = movie.get('movieid')
         self.kodi_db.add_update_art(
-            movie.get('poster'), movieid, 'movie', 'poster')
-        self.kodi_db.add_update_art(
-            movie.get('poster'), movieid, 'movie', 'thumb')
-        self.kodi_db.add_genres(movieid, movie.get('genres'), "movie")
+            movie.get('poster'), movieid, 'poster', 'movie')
+        self.kodi_db.add_update_art(movie.get('poster'), movieid, 'thumb', 'movie')
+        self.kodi_db.add_genres(movieid, movie.get('genres'))
 
         self._add_people(movieid, movie)
-
-    def _get_file_data(self, movie):
-        return self._pick(movie, ['filename', 'dateadded'])
-
-    def _get_path_data(self, movie):
-        """
-        Retrives arguments for path from movie as dict
-        Arguments:
-        movie: dict
-        path, media_type, scraper, 1, last_update
-        """
-        return {
-            'media_type': 'movies',
-            'scraper': 'metadata.local',
-            'last_update': movie.get('last_update')
-        }
 
     def _get_imdb_unique_id(self, movie):
         """
@@ -159,8 +141,9 @@ class Movies(object):
         Arguments
         movie: dict with movie info
         """
+
         return {
-            'media_type': 'movie',
+            'movieid': movie.get('movieid'),
             'value': movie.get('imdb'),
             'type': 'imdb'
         }
@@ -172,16 +155,28 @@ class Movies(object):
         movie: dict with movie info
         """
         return {
-            'media_type': 'movie',
+            'movieid': movie.get('movieid'),
             'value': movie.get('id'),
             'type': 'release'
         }
 
     def _get_ratings_data(self, movie):
-        return self._pick(movie, ['rating', 'votecount'], {
-            'media_type': 'movie',
-            'rating_type': 'default',
+        return self._pick(movie, ['rating', 'votecount', 'moveid'])
+
+    def _map_move_data(self, movie):
+        movie.update({
+            'shortplot': None,
+            'tagline': None,
+            'runtime': self._get_runtime_in_seconds(movie.get('runtime')),
+            'studio': None,
+            'trailer': None,
         })
+        list_items = {}
+        for key, value in movie.iteritems():
+            if type(value) is list:
+                list_items["%s_list" % key] = self._map_array(value)
+        movie.update(list_items)
+        return movie
 
     def _get_movie_data(self, movie):
         return self._pick(movie, [
@@ -243,7 +238,7 @@ class Movies(object):
             if int(release_id) not in release_set]
 
     @abstractmethod
-    def _should_update(self, last_update, movie):
+    def _should_update(self, orgMovie, newMovie):
         pass
 
 class IncrementalMovieUpdater(Movies):
@@ -253,8 +248,8 @@ class IncrementalMovieUpdater(Movies):
     def get_name():
         return 'Incremental Update'
 
-    def _should_update(self, last_update, movie):
-        return last_update != movie.get('last_update')
+    def _should_update(self, orgMovie, newMovie):
+        return (orgMovie.get('version') != newMovie.get('version')) or (orgMovie.get('last_update')  != newMovie.get('last_update'))
 
 class FullMovieUpdater(Movies):
     ''' Updates all movies regardless of last update '''
@@ -263,5 +258,5 @@ class FullMovieUpdater(Movies):
     def get_name():
         return 'Full Update'
 
-    def _should_update(self, last_update, movie):
+    def _should_update(self, orgMovie, newMovie):
             return True

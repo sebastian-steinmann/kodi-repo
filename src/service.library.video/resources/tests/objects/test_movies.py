@@ -24,6 +24,7 @@ class MoviesTests(unittest.TestCase):
             "folder": "filnavn.720p",
             "filename": "filnavn.720p.mkv",
             "dateadded": "timestamp",
+            "last_update": "timestamp",
             "writers": ["sdf"],
             "directors": ["df"],
             "genres": ["comedy"],
@@ -55,7 +56,7 @@ class MoviesTests(unittest.TestCase):
         movies = FullMovieUpdater(None)
         full_path = movies._get_full_path("testFolder")
         self.assertEqual(
-            "http://myusername:password@host.no/movies/testFolder", full_path)
+            "http://myusername:password@host.no/movies/testFolder/", full_path)
 
     @patch('resources.lib.objects.movies.KodiMovies')
     def test_add(self, mock_class):
@@ -77,29 +78,29 @@ class MoviesTests(unittest.TestCase):
 
         movies = FullMovieUpdater(MagicMock())
 
-        movies.update(movie)
+        movies.update(movie.copy()) # copy so values is not overwritten
 
         kodi_db_mock.create_entry.assert_called_with()
-        kodi_db_mock.add_ratings.assert_called_with(
-            media_type='movie',
+        self._assert_args(kodi_db_mock.add_ratings,
             movieid=movieid,
             rating=rating,
-            rating_type='default',
-            votecount=votecount)
+            votecount=votecount
+        )
+
 
         kodi_db_mock.add_uniqueid.assert_any_call(
             movieid=movieid,
-            media_type="movie",
             value=imdb_id,
             type="imdb")
         kodi_db_mock.add_uniqueid.assert_any_call(
             movieid=movieid,
-            media_type="movie",
             value=movie.get('id'),
             type="release")
         kodi_db_mock.add_movie.assert_called()
-        args, kwargs = kodi_db_mock.add_movie.call_args
-        self.assertEqual(int(movie.get('runtime')) * 60, kwargs.get('runtime'))
+
+        self._assert_args(kodi_db_mock.add_movie,
+            runtime = int(movie.get('runtime')) * 60
+        )
 
     @patch('resources.lib.objects.movies.KodiMovies')
     def test_update(self, mockClass):
@@ -117,27 +118,22 @@ class MoviesTests(unittest.TestCase):
         movie = dict(self.base_movie)
 
         kodi_db_mock.get_movie_from_imdb.return_value = [
-            movieid, file_id, uniqueid, path_id, '2014-11-21 19:14:25', None]
+            movieid, file_id, uniqueid, path_id, '2014-11-21 19:14:25', 1, None]
         kodi_db_mock.get_movie_from_release.return_value = None
         kodi_db_mock.get_ratingid.return_value = rating_id
-        kodi_db_mock.get_path_by_media_id.return_value = path_id
 
-        movies.update(movie)
+        movies.update(movie.copy())
 
         kodi_db_mock.update_movie.assert_called()
-        kodi_db_mock.update_ratings.assert_called_with(
-            media_type='movie',
-            rating=movie.get('rating'),
-            rating_type='default',
+        self._assert_args(kodi_db_mock.update_ratings, rating=movie.get('rating'),
             ratingid=rating_id,
             votecount=movie.get('votecount')
         )
-        kodi_db_mock.update_path.assert_called_with(
-            last_update=movie.get('last_update'),
-            media_type='movie',
-            path=movies._get_full_path(movie.get('folder')),
-            path_id=path_id,
-            scraper='metadata.local'
+
+        self._assert_args(kodi_db_mock.update_path,
+            last_update = movie.get('last_update'),
+            full_path= movies._get_full_path(movie.get('folder')),
+            pathid = path_id
         )
         expected_people = [
             {
@@ -157,6 +153,12 @@ class MoviesTests(unittest.TestCase):
         kodi_db_mock.add_people.assert_called_with(
             movieid, expected_people, 'movie')
 
+    def _assert_args(self, method, **args):
+        _, call_args = method.call_args
+        for arg, value in args.iteritems():
+            self.assertIn(arg, call_args)
+            self.assertEqual(value, call_args[arg])
+
     @patch('resources.lib.objects.movies.KodiMovies')
     def test_should_add_release_id_when_missing(self, mockClass):
         kodi_db_mock = mockClass.return_value
@@ -170,7 +172,7 @@ class MoviesTests(unittest.TestCase):
         movie = self.base_movie.copy()
 
         kodi_db_mock.get_movie_from_imdb.return_value = [
-            movieid, file_id, uniqueid_imdbid, path_id, '2014-11-21 19:14:25', None]
+            movieid, file_id, uniqueid_imdbid, path_id, '2014-11-21 19:14:25', 1, None]
         kodi_db_mock.get_movie_from_release.return_value = None
         kodi_db_mock.create_entry.return_value = movieid
         kodi_db_mock.add_rating.return_value = rating_id
@@ -178,13 +180,12 @@ class MoviesTests(unittest.TestCase):
 
         movies = FullMovieUpdater(MagicMock())
         movie = self.base_movie.copy()
-        movies.update(movie)
+        movies.update(movie.copy())
 
         kodi_db_mock.create_entry.assert_not_called()
         kodi_db_mock.add_ratings.assert_not_called()
 
         kodi_db_mock.add_uniqueid.assert_called_with(
-            media_type='movie',
             movieid=movieid,
             type='release',
             value=movie.get('id')
@@ -204,11 +205,11 @@ class MoviesTests(unittest.TestCase):
         kodi_db_mock.get_movie_from_imdb.return_value = None
         kodi_db_mock.get_ratingid.return_value = rating_id
         kodi_db_mock.get_movie_from_release.return_value = [
-            movieid, file_id, uniqueid_imdbid, path_id, '2014-11-21 19:14:25', movie.get('id')]
+            movieid, file_id, uniqueid_imdbid, path_id, '2014-11-21 19:14:25', 1, movie.get('id')]
 
         movies = FullMovieUpdater(MagicMock())
         movie = self.base_movie.copy()
-        movies.update(movie)
+        movies.update(movie.copy())
 
         kodi_db_mock.create_entry.assert_not_called()
         kodi_db_mock.add_ratings.assert_not_called()
@@ -220,7 +221,7 @@ class MoviesTests(unittest.TestCase):
         movie = self.base_movie.copy()
 
         movies = FullMovieUpdater(MagicMock())
-        result = movies._get_movie_data(movie)
+        result = movies._get_movie_data(movie.copy())
 
         self.assertIn('studio', result)
         self.assertEqual(' / '.join(movie.get('writers')),
@@ -262,7 +263,7 @@ class MoviesTests(unittest.TestCase):
         movie = self.base_movie.copy()
         movie.update(country=["USA","UK"])
 
-        result = movies._get_movie_data(movie)
+        result = movies._get_movie_data(movie.copy())
 
         self.assertIn('country', result)
         self.assertEqual('USA / UK', result.get('country'))
@@ -274,7 +275,7 @@ class MoviesTests(unittest.TestCase):
 
         movies = FullMovieUpdater(MagicMock())
 
-        result = movies._add(movie)
+        result = movies._add(movie.copy())
 
         args, kvargs = db.add_movie.call_args
         self.assertIn('fileid', kvargs)
@@ -287,7 +288,7 @@ class MoviesTests(unittest.TestCase):
 
         movies = FullMovieUpdater(MagicMock())
 
-        result = movies._get_movie_data(movie)
+        result = movies._get_movie_data(movie.copy())
 
         self.assertEqual(None, result.get('runtime'))
 

@@ -33,6 +33,10 @@ def settings(setting, value=None):
     else: # returns unicode object
         return addon.getSetting(setting)
 
+def version():
+    addon = xbmcaddon.Addon(id=ADDON_ID)
+    return addon.getAddonInfo('version')
+
 def sourcesXML():
     # To make Master lock compatible
     path = xbmc.translatePath("special://profile/").decode('utf-8')
