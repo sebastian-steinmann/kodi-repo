@@ -1,4 +1,4 @@
-<addon id="steinmann.http.repository" name="Http Repository" version="1.0.0" provider-name="Steinmann">
+<addon id="steinmann.http.repository" name="Http Repository" version="1.1.0" provider-name="Steinmann">
     <requires>
         <import addon="xbmc.addon" version="14.0.0"/>
     </requires>
