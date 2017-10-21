@@ -195,7 +195,7 @@ class Library(threading.Thread):
 
     def _should_sync(self):
         last_sync = self.get_last_sync()
-        interval_seconds = 30 # sync every 15 seconds+
+        interval_seconds = 60 * 10 # sync every 10 minutes
 
         diff = datetime.now() - last_sync
         return diff.total_seconds() > interval_seconds
