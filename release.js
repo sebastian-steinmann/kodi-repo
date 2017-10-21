@@ -11,9 +11,9 @@ const config = {
 	dest: './plugins'
 }
 
-const plugins = fs.readdirSync(config.src);
+const plugins = fs.readdirSync(config.src).filter(p => !p.startsWith('.'));
 const addonsList = [];
-if (!fs.lstatSync(config.dest)) {
+if (!fs.existsSync(config.dest)) {
 	fs.mkdirSync(config.dest);
 }
 iterateAddons(plugins, 0, createAddonsXml);
@@ -38,7 +38,7 @@ function zipAddon(plugin, cb) {
 		const zipFolder = zip.folder(plugin);
 		addFilesRec(zipFolder, srcFolder);
 		
-		if (!fs.lstatSync(destDir)) {
+		if (!fs.existsSync(destDir)) {
 			fs.mkdirSync(destDir);
 		}
 		// Copy icon file

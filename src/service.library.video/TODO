@@ -1,0 +1,22 @@
+ Done:
+ x Timestamp check
+ > Skuespillere
+    - Mangler artwork
+    - Mangler rolle
+ x Lagre lastFullSync
+ x Flere filmer med samme imdb_id
+    * Releases
+    * Språk
+ x Fjerne filmer som ikke lenger ligger der
+ x Precache artwork
+ x Visuelle dialoger under scan
+ x Versjonering fra server og client
+
+ TODO:
+ * SQL facade
+  * Lese settings
+  * Lage facade rundt vanlig SQL
+  * Velge riktig
+
+ Serier
+  * shittload
