@@ -17,10 +17,10 @@
   },
   "homepage": "https://github.com/sebastian-steinmann/kodi-repo#readme",
   "devDependencies": {
-    "checksum": "^0.1.1",
-    "jszip": "^3.1.2",
-    "md5-file": "^3.1.1",
-    "rimraf": "^2.5.4",
-    "xml2js": "^0.4.17"
+    "checksum": "0.1.1",
+    "jszip": "3.1.2",
+    "md5-file": "3.1.1",
+    "rimraf": "2.5.4",
+    "xml2js": "0.4.17"
   }
 }

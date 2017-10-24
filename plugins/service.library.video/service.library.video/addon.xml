@@ -2,7 +2,7 @@
 <addon id="service.library.video"
        name="Video lib sync"
        version="0.0.1"
-       provider-name="">
+       provider-name="Steinmann">
   <requires>
     <import addon="xbmc.python" version="2.14.0"/>
   </requires>
