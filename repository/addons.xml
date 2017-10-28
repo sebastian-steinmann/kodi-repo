@@ -1,14 +1,14 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<addons><addon id="steinmann.http.repository" name="Http Repository" provider-name="Steinmann" version="1.1.0">
+<addons><addon id="steinmann.http.repository" name="Http Repository" provider-name="Steinmann" version="1.1.1">
     <requires>
         <import addon="xbmc.addon" version="14.0.0" />
     </requires>
     <extension name="Http Repository" point="xbmc.addon.repository">
         <info compressed="false">
-            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/master/plugins/addons.xml
+            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/master/repository/addons.xml
         </info>
         <checksum>
-            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/master/plugins/addons.xml.md5
+            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/master/repository/addons.xml
         </checksum>
         <datadir zip="true">
             https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/master/repository/
@@ -23,6 +23,9 @@
 
         </description>
         <platform>all</platform>
+        <news>
+            1.1.1 Fikset riktig link til addons.xml
+        </news>
     </extension>
 </addon><addon id="service.library.video" name="Video lib sync" provider-name="Steinmann" version="0.1.1">
   <requires>
