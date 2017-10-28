@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="service.subtitles.http" name="Http Subs" version="0.2.1" provider-name="Steinmann">
+ <requires>
+    <import addon="xbmc.python" version="2.14.0"/>
+</requires>
+<extension point="xbmc.subtitle.module" library="service.py"/>
+ <extension point="xbmc.addon.metadata">
+    <summary lang="en">Get subtitles from HTTP</summary>
+    <description lang="en">Tries to find subs in the ./Subs folder</description>
+    <disclaimer lang="en"/>
+    <platform>all</platform>
+    <language/>
+    <license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
+    <forum></forum>
+    <website/>
+    <email/>
+    <source></source>
+    <news>
+        0.2.0
+        - Removed same folder check as it was not working 100%
+        0.1.5
+        - Fixed subs with different filenames than foldername
+        0.1.4
+        - Fixed srt download using tmp folder
+        - Cleanup of code
+        0.1.3
+        - Download subs from /Subs/*.rar
+
+    </news>
+</extension>
+</addon>

@@ -1,0 +1,74 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<addons><addon id="steinmann.http.repository" name="Http Repository" provider-name="Steinmann" version="1.1.0">
+    <requires>
+        <import addon="xbmc.addon" version="14.0.0" />
+    </requires>
+    <extension name="Http Repository" point="xbmc.addon.repository">
+        <info compressed="false">
+            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/master/plugins/addons.xml
+        </info>
+        <checksum>
+            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/master/plugins/addons.xml.md5
+        </checksum>
+        <datadir zip="true">
+            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/master/repository/
+        </datadir>
+        <hashes>true</hashes>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary>
+            Install add-ons from the magical Steinmann
+        </summary>
+        <description>
+
+        </description>
+        <platform>all</platform>
+    </extension>
+</addon><addon id="service.library.video" name="Video lib sync" provider-name="Steinmann" version="0.1.0">
+  <requires>
+    <import addon="xbmc.python" version="2.14.0" />
+    <import addon="script.module.requests" version="2.9.1" />
+  </requires>
+  <extension library="service.py" point="xbmc.service" start="login" />
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en">Get subtitles from HTTP</summary>
+    <description lang="en">Tries to find subs in the ./Subs folder</description>
+    <disclaimer lang="en" />
+    <platform>all</platform>
+    <language />
+    <license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
+    <forum />
+    <website />
+    <email />
+    <source />
+  </extension>
+</addon><addon id="service.subtitles.http" name="Http Subs" provider-name="Steinmann" version="0.2.1">
+ <requires>
+    <import addon="xbmc.python" version="2.14.0" />
+</requires>
+<extension library="service.py" point="xbmc.subtitle.module" />
+ <extension point="xbmc.addon.metadata">
+    <summary lang="en">Get subtitles from HTTP</summary>
+    <description lang="en">Tries to find subs in the ./Subs folder</description>
+    <disclaimer lang="en" />
+    <platform>all</platform>
+    <language />
+    <license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
+    <forum />
+    <website />
+    <email />
+    <source />
+    <news>
+        0.2.0
+        - Removed same folder check as it was not working 100%
+        0.1.5
+        - Fixed subs with different filenames than foldername
+        0.1.4
+        - Fixed srt download using tmp folder
+        - Cleanup of code
+        0.1.3
+        - Download subs from /Subs/*.rar
+
+    </news>
+</extension>
+</addon></addons>
