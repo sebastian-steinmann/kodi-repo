@@ -24,7 +24,7 @@
         </description>
         <platform>all</platform>
     </extension>
-</addon><addon id="service.library.video" name="Video lib sync" provider-name="Steinmann" version="0.1.0">
+</addon><addon id="service.library.video" name="Video lib sync" provider-name="Steinmann" version="0.1.1">
   <requires>
     <import addon="xbmc.python" version="2.14.0" />
     <import addon="script.module.requests" version="2.9.1" />
@@ -41,6 +41,10 @@
     <website />
     <email />
     <source />
+    <news>
+    0.1.1 Fikset dateparse feil
+    0.1.0 Initial
+    </news>
   </extension>
 </addon><addon id="service.subtitles.http" name="Http Subs" provider-name="Steinmann" version="0.2.1">
  <requires>
