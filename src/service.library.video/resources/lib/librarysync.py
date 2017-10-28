@@ -173,7 +173,7 @@ class Library(threading.Thread):
 
     def _get_last_full_sync(self):
         last_sync = settings('LastFullSync')
-        if last_sync is None:
+        if not last_sync:
             return datetime(1970, 1, 1)
         return self.parse_str_date(last_sync)
 

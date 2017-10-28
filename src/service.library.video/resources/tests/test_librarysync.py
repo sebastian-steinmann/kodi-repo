@@ -69,6 +69,18 @@ class LibraryTests(unittest.TestCase):
         full_sync = service._should_do_full_sync()
         self.assertFalse(full_sync)
 
+    @patch('resources.lib.librarysync.FullMovieUpdater')
+    @patch('resources.lib.librarysync.xbmc')
+    @patch('resources.lib.librarysync.Api')
+    def test_should_not_crash_on_empty_date(self, mocked_api, mocked_xbmc, mocked_movies):
+        mocked_xbmc.Monitor.return_value = MagicMock()
+        service = Library()
+
+        last_full_sync = datetime(1970, 1, 1)
+        self.settings['LastFullSync'] = ''
+
+        self.assertAlmostEqual(last_full_sync.day, service._get_last_full_sync().day)
+
     @patch('resources.lib.librarysync.IncrementalMovieUpdater')
     @patch('resources.lib.librarysync.xbmc')
     @patch('resources.lib.librarysync.Api')
