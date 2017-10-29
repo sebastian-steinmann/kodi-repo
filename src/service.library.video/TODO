@@ -11,6 +11,7 @@
  x Precache artwork
  x Visuelle dialoger under scan
  x Versjonering fra server og client
+ x Fikse client-version (for rescan)
 
  TODO:
  * SQL facade
@@ -18,8 +19,8 @@
   * Lage facade rundt vanlig SQL
   * Velge riktig
 
+ * bedre clean av genres
  * Fikse artwork fra dings istedenfor imdb
- * Fikse client-version (for rescan)
  * 2-vei sync av watched
 
  Serier

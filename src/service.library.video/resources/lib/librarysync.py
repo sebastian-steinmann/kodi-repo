@@ -18,7 +18,7 @@ log = logging.getLogger("DINGS.library")  # pylint: disable=invalid-name
 
 class Library(threading.Thread):
     """ Root service for sync """
-    client_version = 2
+    client_version = '2'
     _shared_state = {}
     stop_thread = False
 
@@ -198,7 +198,7 @@ class Library(threading.Thread):
         return client_version
 
     def _is_outdated_client(self):
-        return self._get_client_version() < self.client_version
+        return self._get_client_version() != self.client_version
 
     def _should_do_full_sync(self):
         if self._is_outdated_client():
