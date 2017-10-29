@@ -139,7 +139,7 @@ class Library(threading.Thread):
         if self._should_stop():
             return 0, 0
 
-        count = 0
+        lCount = 0
         total = len(movies)
 
         window("dings_kodiscan", "true")
@@ -151,7 +151,7 @@ class Library(threading.Thread):
                 if movies_db.update(movie):
                     log.debug("La til filmen %s id: %s, r: %s. %s/%s",
                               movie.get('title'), movie.get('imdb'), movie.get('id'), self.count, total)
-                    count += 1
+                    lCount += 1
 
             window('dings_kodiScan', clear=True)
 
@@ -159,7 +159,7 @@ class Library(threading.Thread):
             self.pdialog.close()
 
         # xbmc.executebuiltin('UpdateLibrary(video)')
-        return total, self.count
+        return total, lCount
 
     def save_last_full_sync(self, last_sync):
         """
