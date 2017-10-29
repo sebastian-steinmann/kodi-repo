@@ -62,7 +62,7 @@ class LibraryTests(unittest.TestCase):
         service = Library()
 
         last_full_sync = datetime.now()
-        self.settings['LastFullSync'] = service.get_str_date(last_full_sync)
+        self.settings['LastFullSync'] = service.date_utils.get_str_date(last_full_sync)
 
         self.assertAlmostEqual(last_full_sync.day, service._get_last_full_sync().day)
 
@@ -92,10 +92,10 @@ class LibraryTests(unittest.TestCase):
         last_full_sync = datetime.now()
         #self._fake_settings_sideeffect('LastFullSync', service.get_str_date(last_full_sync))
         #self._fake_settings_sideeffect('LastIncrementalSync', service.get_str_date(last_full_sync))
-        self.settings['LastFullSync'] = service.get_str_date(last_full_sync)
-        self.settings['LastIncrementalSync'] = service.get_str_date(last_full_sync)
+        self.settings['LastFullSync'] = service.date_utils.get_str_date(last_full_sync)
+        self.settings['LastIncrementalSync'] = service.date_utils.get_str_date(last_full_sync)
 
         service.update()
 
-        api.get_movies_from.assert_called_with(service.get_str_date(last_full_sync))
+        api.get_movies_from.assert_called_with(service.date_utils.get_str_date(last_full_sync))
 

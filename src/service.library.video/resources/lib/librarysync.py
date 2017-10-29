@@ -1,10 +1,8 @@
 """ Actual implementation of service """
 import logging
-# Workaround for http://bugs.python.org/issue8098
-import _strptime # pylint: disable=unused-import
+
 from datetime import datetime
 import threading
-import time
 
 import xbmc
 import xbmcgui
@@ -13,6 +11,7 @@ from resources.lib.service_api import Api
 from resources.lib.objects.movies import FullMovieUpdater, IncrementalMovieUpdater
 import resources.lib.objects.database as database
 from resources.lib.util import window, settings  # , sourcesXML
+from resources.lib.date_utils import DateUtils
 
 log = logging.getLogger("DINGS.library")  # pylint: disable=invalid-name
 
@@ -20,7 +19,6 @@ log = logging.getLogger("DINGS.library")  # pylint: disable=invalid-name
 class Library(threading.Thread):
     """ Root service for sync """
 
-    format = '%Y-%m-%dT%H:%M:%SZ'
     _shared_state = {}
     stop_thread = False
 
@@ -28,6 +26,8 @@ class Library(threading.Thread):
     title = None
     count = 0
     total = 0
+
+    date_utils = DateUtils()
 
     def __init__(self):
         self.__dict__ = self._shared_state
@@ -130,8 +130,7 @@ class Library(threading.Thread):
         return total, count
 
     def _incremental_update(self):
-        all_movies = self.api.get_movies_from(self.get_str_date(self.get_last_sync()))
-        #'2017-06-11T21:09:40Z') #self.get_str_date(last_sync))
+        all_movies = self.api.get_movies_from(self.date_utils.get_str_date(self.get_last_sync()))
 
         return self._do_update(all_movies, IncrementalMovieUpdater)
 
@@ -169,22 +168,22 @@ class Library(threading.Thread):
         Arguments
         last_sync: date
         """
-        settings('LastFullSync', self.get_str_date(last_sync))
+        settings('LastFullSync', self.date_utils.get_str_date(last_sync))
 
     def _get_last_full_sync(self):
         last_sync = settings('LastFullSync')
         if not last_sync:
             return datetime(1970, 1, 1)
-        return self.parse_str_date(last_sync)
+        return self.date_utils.parse_str_date(last_sync)
 
     def set_last_sync(self, last_sync):
-        settings('LastIncrementalSync', self.get_str_date(last_sync))
+        settings('LastIncrementalSync', self.date_utils.get_str_date(last_sync))
 
     def get_last_sync(self):
         last_sync = settings('LastIncrementalSync')
         if not last_sync:
             return datetime(1970, 1, 1)
-        return self.parse_str_date(settings('LastIncrementalSync'))
+        return self.date_utils.parse_str_date(settings('LastIncrementalSync'))
 
     def _should_do_full_sync(self):
         last_full_sync = self._get_last_full_sync()
@@ -229,27 +228,6 @@ class Library(threading.Thread):
 
     def _should_stop(self):
         return self.stop_thread or self.monitor.abortRequested()
-
-
-    def get_str_date(self, date):
-        """
-        Formats datetime to str of format %Y-%m-%dT%H:%M:%SZ
-        Arguments
-        date: datetime
-        """
-        return datetime.strftime(date, self.format)
-
-    def parse_str_date(self, str_date):
-        """
-        Parse a date of format %Y-%m-%dT%H:%M:%SZ to date
-        Arguments
-        str_date: str, %Y-%m-%dT%H:%M:%SZ
-        """
-
-        try:
-            return datetime.strptime(str_date, self.format)
-        except TypeError:
-            return datetime(*(time.strptime(str_date, self.format)[0:6]))
 
     def stopThread(self):
         self.stop_thread = True

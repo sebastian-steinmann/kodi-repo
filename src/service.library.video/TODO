@@ -18,5 +18,9 @@
   * Lage facade rundt vanlig SQL
   * Velge riktig
 
+ * Fikse artwork fra dings istedenfor imdb
+ * Fikse client-version (for rescan)
+ * 2-vei sync av watched
+
  Serier
   * shittload

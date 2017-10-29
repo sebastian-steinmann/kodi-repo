@@ -3,12 +3,25 @@
 import unittest
 from resources.lib.objects.movies import FullMovieUpdater, IncrementalMovieUpdater
 from resources.lib.update_strategy import ForceStrategy
+from resources.lib.date_utils import DateUtils
+
+import resources.lib.loghandler as loghandler
+
+import sys
+import logging
+
+
 
 from mock import MagicMock, patch, ANY
 
 
 class MoviesTests(unittest.TestCase):
+    dateutils = DateUtils()
+
     def setUp(self):
+        logger = loghandler.config()
+        logger.addHandler(logging.StreamHandler(sys.stdout))
+
         self.settings = {
             'username': 'myusername',
             'password': 'password',
@@ -23,8 +36,8 @@ class MoviesTests(unittest.TestCase):
             "title": "Filmnavn",
             "folder": "filnavn.720p",
             "filename": "filnavn.720p.mkv",
-            "dateadded": "timestamp",
-            "last_update": "timestamp",
+            "dateadded": "2012-07-27T08:16:35.000Z",
+            "last_update": "2012-07-27T08:16:35.000Z",
             "writers": ["sdf"],
             "directors": ["df"],
             "genres": ["comedy"],
@@ -42,7 +55,8 @@ class MoviesTests(unittest.TestCase):
             "studios": [""],
             "trailer": None,
             "boxset": "2",
-            "actors": ["Actor 1"]
+            "actors": ["Actor 1"],
+            "version": "1"
         }
 
     def tearDown(self):
@@ -82,11 +96,10 @@ class MoviesTests(unittest.TestCase):
 
         kodi_db_mock.create_entry.assert_called_with()
         self._assert_args(kodi_db_mock.add_ratings,
-            movieid=movieid,
-            rating=rating,
-            votecount=votecount
-        )
-
+                          movieid=movieid,
+                          rating=rating,
+                          votecount=votecount
+                         )
 
         kodi_db_mock.add_uniqueid.assert_any_call(
             movieid=movieid,
@@ -99,8 +112,8 @@ class MoviesTests(unittest.TestCase):
         kodi_db_mock.add_movie.assert_called()
 
         self._assert_args(kodi_db_mock.add_movie,
-            runtime = int(movie.get('runtime')) * 60
-        )
+                          runtime = int(movie.get('runtime')) * 60
+                         )
 
     @patch('resources.lib.objects.movies.KodiMovies')
     def test_update(self, mockClass):
@@ -131,7 +144,7 @@ class MoviesTests(unittest.TestCase):
         )
 
         self._assert_args(kodi_db_mock.update_path,
-            last_update = movie.get('last_update'),
+            last_update = self.dateutils.get_kodi_date_format(movie.get('last_update')),
             full_path= movies._get_full_path(movie.get('folder')),
             pathid = path_id
         )
@@ -215,6 +228,48 @@ class MoviesTests(unittest.TestCase):
         kodi_db_mock.add_ratings.assert_not_called()
 
         kodi_db_mock.add_uniqueid.assert_not_called()
+
+    @patch('resources.lib.objects.movies.KodiMovies')
+    def test_should_compare_versions(self, mockClass):
+        kodi_db_mock = mockClass.return_value
+
+        movieid = 13
+        rating_id = 12
+        uniqueid_imdbid = 14
+        path_id = 1
+        file_id = 2
+        movie = self.base_movie.copy()
+
+        kodi_db_mock.get_movie_from_imdb.return_value = None
+        kodi_db_mock.get_ratingid.return_value = rating_id
+        kodi_db_mock.get_movie_from_release.return_value = [
+            movieid, file_id, uniqueid_imdbid, path_id, '2014-11-21 19:14:25', "1:2012-07-27 08:16:35", movie.get('id')]
+
+        movies = IncrementalMovieUpdater(MagicMock())
+        res = movies.update(movie.copy())
+
+        self.assertFalse(res)
+
+    @patch('resources.lib.objects.movies.KodiMovies')
+    def test_should_compare_versions_and_update(self, mockClass):
+        kodi_db_mock = mockClass.return_value
+
+        movieid = 13
+        rating_id = 12
+        uniqueid_imdbid = 14
+        path_id = 1
+        file_id = 2
+        movie = self.base_movie.copy()
+
+        kodi_db_mock.get_movie_from_imdb.return_value = None
+        kodi_db_mock.get_ratingid.return_value = rating_id
+        kodi_db_mock.get_movie_from_release.return_value = [
+            movieid, file_id, uniqueid_imdbid, path_id, '2014-11-21 19:14:25', "1:2012-07-25 08:16:35", movie.get('id')]
+
+        movies = IncrementalMovieUpdater(MagicMock())
+        res = movies.update(movie.copy())
+
+        self.assertTrue(res)
 
     @patch('resources.lib.objects.movies.KodiMovies')
     def test_should_map_movie_data(self, mockClass):

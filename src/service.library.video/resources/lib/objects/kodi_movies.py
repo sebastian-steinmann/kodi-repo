@@ -61,14 +61,13 @@ class KodiMovies(object):
         Arguments:
         path_id: int, id of path to update
         path: string, path of folder
-        last_update: date
         """
         query = '''
             UPDATE path
-            SET strPath = ?, strContent = ?, strScraper = ?, noUpdate = ?, dateAdded = ?, strHash = ?
+            SET strPath = ?, strContent = ?, strScraper = ?, noUpdate = ?, strHash = ?
             WHERE idPath = ?
         '''
-        self.cursor.execute(query, (full_path, 'movies', 'metadata.local', 1, last_update, version, pathid))
+        self.cursor.execute(query, (full_path, 'movies', 'metadata.local', 1, version, pathid))
 
     def remove_path(self, path_id):
         self.cursor.execute("DELETE FROM path WHERE idPath = ?", (path_id,))
@@ -107,11 +106,10 @@ class KodiMovies(object):
             fileid: int
             pathid: int
             filename: filename without folder, inkluding file ending
-            dateadded: yyyy-mm-dd
         """
         query = '''
             UPDATE files
-            SET idPath = :pathid, strFilename = :filename, dateAdded = :dateadded
+            SET idPath = :pathid, strFilename = :filename
             WHERE idFile = :fileid
         '''
         self.cursor.execute(query, kvargs)
@@ -196,7 +194,7 @@ class KodiMovies(object):
                 :shortplot,
                 :tagline,
                 :votecount,
-                :uniqueid,
+                :ratingid,
                 :writers_list,
                 :year,
                 :imdb,
@@ -251,7 +249,7 @@ class KodiMovies(object):
             c02 = :shortplot,
             c03 = :tagline,
             c04 = :votecount,
-            c05 = :uniqueid,
+            c05 = :ratingid,
             c06 = :writers_list,
             c07 = :year,
             c09 = :imdb,

@@ -5,6 +5,7 @@ from urlparse import urlparse
 
 from resources.lib.util import settings
 from resources.lib.objects.kodi_movies import KodiMovies
+from resources.lib.date_utils import DateUtils
 
 log = logging.getLogger("DINGS.db")  # pylint: disable=invalid-name
 
@@ -15,6 +16,7 @@ class Movies(object):
 
     def __init__(self, cursor):
         self.kodi_db = KodiMovies(cursor)
+        self.date_utils = DateUtils()
 
     @staticmethod
     def get_name():
@@ -49,7 +51,7 @@ class Movies(object):
 
 
     def _update(self, movie, excisting_data):
-        movie_entity = self. _map_move_data(movie.copy())
+        movie_entity = self._map_move_data(movie.copy())
         movie_entity, org_movie = self._map_existing_data(movie_entity, excisting_data)
 
         if not self._should_update(org_movie, movie_entity):
@@ -74,12 +76,12 @@ class Movies(object):
         return True
 
     def _add(self, movie):
-        movie_entity = self. _map_move_data(movie.copy())
+        movie_entity = self._map_move_data(movie.copy())
 
         movie_entity['movieid'] = self.kodi_db.create_entry()
         movie_entity['full_path'] = self._get_full_path(movie_entity.get('folder'))
         # add ratings
-        self.kodi_db.add_ratings(**movie_entity)
+        movie_entity['ratingid'] = self.kodi_db.add_ratings(**movie_entity)
 
         # add imdb unique id for ref
         self.kodi_db.add_uniqueid(**self._get_imdb_unique_id(movie_entity))
@@ -95,6 +97,7 @@ class Movies(object):
 
         self._add_or_update_meta(movie_entity)
         return True
+
 
     def _get_full_path(self, folder):
         """ Add host, username and password to folderpath """
@@ -164,12 +167,15 @@ class Movies(object):
         return self._pick(movie, ['rating', 'votecount', 'moveid'])
 
     def _map_move_data(self, movie):
+        last_update = self.date_utils.get_kodi_date_format(movie.get('last_update'))
         movie.update({
             'shortplot': None,
             'tagline': None,
             'runtime': self._get_runtime_in_seconds(movie.get('runtime')),
             'studio': None,
             'trailer': None,
+            'last_update': last_update,
+            'version': self._generate_str_hash(movie.get('version'), last_update)
         })
         list_items = {}
         for key, value in movie.iteritems():
@@ -177,6 +183,9 @@ class Movies(object):
                 list_items["%s_list" % key] = self._map_array(value)
         movie.update(list_items)
         return movie
+
+    def _generate_str_hash(self, version, last_update):
+        return "%s:%s" % (version, last_update)
 
     def _get_movie_data(self, movie):
         return self._pick(movie, [
@@ -249,7 +258,7 @@ class IncrementalMovieUpdater(Movies):
         return 'Incremental Update'
 
     def _should_update(self, orgMovie, newMovie):
-        return (orgMovie.get('version') != newMovie.get('version')) or (orgMovie.get('last_update')  != newMovie.get('last_update'))
+        return (orgMovie.get('version') != newMovie.get('version'))
 
 class FullMovieUpdater(Movies):
     ''' Updates all movies regardless of last update '''

@@ -14,6 +14,7 @@ def config():
     logger = logging.getLogger('DINGS')
     logger.addHandler(LogHandler())
     logger.setLevel(logging.DEBUG)
+    return logger
 
 
 class LogHandler(logging.StreamHandler):
