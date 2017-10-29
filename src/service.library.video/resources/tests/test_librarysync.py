@@ -16,7 +16,8 @@ class LibraryTests(unittest.TestCase):
             'host': 'http://host.no',
             'endpoint': 'http://host.no',
             'LastIncrementalSync': None,
-            'LastFullSync': None
+            'LastFullSync': None,
+            'ClientVersion': Library.client_version
         }
         self.settings_patch = patch(
             'resources.lib.librarysync.settings', side_effect=self._fake_settings_sideeffect)

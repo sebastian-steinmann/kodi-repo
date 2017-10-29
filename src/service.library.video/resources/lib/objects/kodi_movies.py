@@ -64,10 +64,10 @@ class KodiMovies(object):
         """
         query = '''
             UPDATE path
-            SET strPath = ?, strContent = ?, strScraper = ?, noUpdate = ?, strHash = ?
+            SET strPath = ?, strContent = ?, strScraper = ?, noUpdate = ?, dateAdded = ?, strHash = ?
             WHERE idPath = ?
         '''
-        self.cursor.execute(query, (full_path, 'movies', 'metadata.local', 1, version, pathid))
+        self.cursor.execute(query, (full_path, 'movies', 'metadata.local', 1, last_update, version, pathid))
 
     def remove_path(self, path_id):
         self.cursor.execute("DELETE FROM path WHERE idPath = ?", (path_id,))
@@ -93,7 +93,7 @@ class KodiMovies(object):
             query = (
                 '''
                 INSERT INTO files(idPath, strFilename, dateAdded)
-                VALUES (:pathid, :filename, :dateadded)
+                VALUES (:pathid, :filename, :last_update)
                 '''
             )
             self.cursor.execute(query, kvargs)
@@ -109,7 +109,7 @@ class KodiMovies(object):
         """
         query = '''
             UPDATE files
-            SET idPath = :pathid, strFilename = :filename
+            SET idPath = :pathid, strFilename = :filename, dateAdded = :last_update
             WHERE idFile = :fileid
         '''
         self.cursor.execute(query, kvargs)

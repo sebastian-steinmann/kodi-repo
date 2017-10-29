@@ -18,7 +18,7 @@ log = logging.getLogger("DINGS.library")  # pylint: disable=invalid-name
 
 class Library(threading.Thread):
     """ Root service for sync """
-
+    client_version = 2
     _shared_state = {}
     stop_thread = False
 
@@ -169,6 +169,7 @@ class Library(threading.Thread):
         last_sync: date
         """
         settings('LastFullSync', self.date_utils.get_str_date(last_sync))
+        self._update_client_version()
 
     def _get_last_full_sync(self):
         last_sync = settings('LastFullSync')
@@ -178,6 +179,7 @@ class Library(threading.Thread):
 
     def set_last_sync(self, last_sync):
         settings('LastIncrementalSync', self.date_utils.get_str_date(last_sync))
+        self._update_client_version()
 
     def get_last_sync(self):
         last_sync = settings('LastIncrementalSync')
@@ -185,7 +187,22 @@ class Library(threading.Thread):
             return datetime(1970, 1, 1)
         return self.date_utils.parse_str_date(settings('LastIncrementalSync'))
 
+    def _update_client_version(self):
+        if self._is_outdated_client():
+            settings('ClientVersion', self.client_version)
+
+    def _get_client_version(self):
+        client_version = settings('ClientVersion')
+        if not client_version:
+            return 1
+        return client_version
+
+    def _is_outdated_client(self):
+        return self._get_client_version() < self.client_version
+
     def _should_do_full_sync(self):
+        if self._is_outdated_client():
+            return True
         last_full_sync = self._get_last_full_sync()
         interval_seconds = 24 * 60 * 60
 
