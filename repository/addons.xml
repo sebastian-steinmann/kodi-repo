@@ -27,7 +27,7 @@
             1.1.1 Fikset riktig link til addons.xml
         </news>
     </extension>
-</addon><addon id="service.library.video" name="Video lib sync" provider-name="Steinmann" version="0.1.2">
+</addon><addon id="service.library.video" name="Video lib sync" provider-name="Steinmann" version="0.2.0">
   <requires>
     <import addon="xbmc.python" version="2.14.0" />
     <import addon="script.module.requests" version="2.9.1" />
@@ -45,9 +45,13 @@
     <email />
     <source />
     <news>
-    0.1.2 Fikset poc filer og riktig logging ved incremental
-    0.1.1 Fikset dateparse feil
-    0.1.0 Initial
+    0.2.0:
+    * Fikset rating-vising
+    * endret så dateAdded blir riktig
+    * Oppdaterer ikke dateAdded med last_changed, men bruker strHash istedenfor
+    0.1.2: Fikset poc filer og riktig logging ved incremental
+    0.1.1: Fikset dateparse feil
+    0.1.0: Initial
     </news>
   </extension>
 </addon><addon id="service.subtitles.http" name="Http Subs" provider-name="Steinmann" version="0.2.1">
