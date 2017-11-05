@@ -371,3 +371,82 @@ class MoviesTests(unittest.TestCase):
         self.assertEqual(1, len(result))
         self.assertEqual(104, result[0]['media_id'])
 
+
+    @patch('resources.lib.objects.movies.KodiMovies')
+    def test_should_do_nithing_if_tags_equal(self, mock_movies):
+        db = mock_movies.return_value
+
+        db.get_tags.return_value = [
+        ]
+        new_tags = ['Drama', 'Comedy']
+        movieid = 12
+        movie = {
+            'movieid': movieid,
+            'tags': new_tags
+        }
+        movies = FullMovieUpdater(MagicMock())
+        movies._sync_tags(movie)
+
+        db.remove_tag_links.assert_called_with(movieid, [])
+        db.add_tags.assert_called_with(movieid, new_tags)
+
+    @patch('resources.lib.objects.movies.KodiMovies')
+    def test_should_remove_tags(self, mock_movies):
+        db = mock_movies.return_value
+
+        db.get_tags.return_value = [
+            (1, 'Drama', 12),
+            (2, 'Romance', 13)
+        ]
+        new_tags = ['Drama']
+        movieid = 12
+        movie = {
+            'movieid': movieid,
+            'tags': new_tags
+        }
+        movies = FullMovieUpdater(MagicMock())
+        movies._sync_tags(movie)
+
+        db.remove_tag_links.assert_called_with(movieid, [2])
+        db.add_tags.assert_called_with(movieid, [])
+
+    @patch('resources.lib.objects.movies.KodiMovies')
+    def test_should_add_tags(self, mock_movies):
+        db = mock_movies.return_value
+
+        db.get_tags.return_value = [
+            (1, 'Drama', 12)
+        ]
+        new_tags = ['Drama', 'Comedy']
+        movieid = 12
+        movie = {
+            'movieid': movieid,
+            'tags': new_tags
+        }
+        movies = FullMovieUpdater(MagicMock())
+        movies._sync_tags(movie)
+
+        db.remove_tag_links.assert_called_with(movieid, [])
+        db.add_tags.assert_called_with(movieid, ['Comedy'])
+
+
+    @patch('resources.lib.objects.movies.KodiMovies')
+    def test_should_only_remove_remote_tags(self, mock_movies):
+        db = mock_movies.return_value
+
+        db.get_tags.return_value = [
+            (1, 'Drama', 12),
+            (2, 'Romance', 13),
+            (3, 'Test', None)
+        ]
+        new_tags = ['Drama']
+        movieid = 12
+        movie = {
+            'movieid': movieid,
+            'tags': new_tags
+        }
+        movies = FullMovieUpdater(MagicMock())
+        movies._sync_tags(movie)
+
+        db.remove_tag_links.assert_called_with(movieid, [2])
+        db.add_tags.assert_called_with(movieid, [])

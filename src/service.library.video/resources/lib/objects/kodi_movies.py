@@ -269,6 +269,18 @@ class KodiMovies(object):
         '''
         self.cursor.execute(query, kvargs)
 
+    def set_streamdetails(self, fileid, language, **kvargs):
+        """
+            Updates streamdetails with language and common meta
+        """
+        query = '''
+            INSERT OR REPLACE INTO streamdetails
+            (idFile, iStreamType, strAudioLanguage, strVideoLanguage, strVideoCodec, iVideoWidth, iVideoHeight)
+            values (?, 0, ?, ?, 'h264', '1920', '1040')
+        '''
+
+        self.cursor.execute(query, (fileid, language, language))
+
     def add_genres(self, kodi_id, genres):
 
         # Delete current genres for clean slate
@@ -593,3 +605,76 @@ class KodiMovies(object):
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
+    def get_tags(self, movieid):
+        ''' Gets tags for media_id with external ref '''
+        query = '''
+            SELECT tag.tag_id, tag.name, uniqueid_id FROM tag_link
+            LEFT JOIN tag on (tag.tag_id = tag_link.tag_id)
+            LEFT JOIN uniqueid uid on (
+                uid.media_id = ? AND
+                uid.media_type = 'movie' AND
+                uid.type = 'external_tag' AND
+                uid.value = tag.tag_id
+            )
+            WHERE tag_link.media_id = ?
+            AND tag_link.media_type = 'movie'
+        '''
+
+        self.cursor.execute(query, (movieid, movieid))
+        return self.cursor.fetchall()
+
+    def remove_tag_links(self, moveid, tags):
+        if not tags:
+            return
+
+        query = '''
+            DELETE FROM tag_link
+            WHERE tag_id in (?)
+            AND media_id = ?
+            AND media_type = 'movie'
+        '''
+        self.cursor.execute(query, (','.join(map(str, tags)), moveid))
+
+        query = '''
+            DELETE FROM uniqueid
+            WHERE value in (?)
+            AND media_id = ?
+            AND media_type = 'movie'
+            AND type = 'external_tag'
+        '''
+        self.cursor.execute(query, (','.join(map(str, tags)), moveid))
+
+    def _get_or_add_tag(self, tag):
+        query = '''
+            select tag_id from tag
+            where name = ?
+            COLLATE NOCASE
+        '''
+        self.cursor.execute(query, (str(tag),))
+        try:
+            return self.cursor.fetchone()[0]
+        except TypeError: # Add the artwork
+            query = '''
+                insert into tag (name) values (?)
+            '''
+            self.cursor.execute(query, (tag,))
+            return self.cursor.lastrowid
+
+    def add_tags(self, movieid, tags):
+        if not tags:
+            return
+
+        for tag in tags:
+            tag_id = self._get_or_add_tag(tag)
+            query = '''
+                INSERT INTO tag_link
+                (tag_id, media_id, media_type)
+                VALUES (?, ?, 'movie')
+            '''
+            self.cursor.execute(query, (tag_id, movieid))
+            query = '''
+                INSERT INTO uniqueid
+                (media_id, media_type, type, value)
+                VALUES (?, 'movie', 'external_tag', ?)
+            '''
+            self.cursor.execute(query, (movieid, tag_id))
