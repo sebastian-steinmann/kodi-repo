@@ -1,27 +1,14 @@
- Done:
- x Timestamp check
- > Skuespillere
-    - Mangler artwork
-    - Mangler rolle
- x Lagre lastFullSync
- x Flere filmer med samme imdb_id
-    * Releases
-    * Språk
- x Fjerne filmer som ikke lenger ligger der
- x Precache artwork
- x Visuelle dialoger under scan
- x Versjonering fra server og client
- x Fikse client-version (for rescan)
-
- TODO:
  * SQL facade
   * Lese settings
   * Lage facade rundt vanlig SQL
   * Velge riktig
 
- * bedre clean av genres
- * Fikse artwork fra dings istedenfor imdb
  * 2-vei sync av watched
+  * tracke på imdb-id og ikke Release
+  * bruke lastPlayed og dateAdded
+  * krever tabell i db
+ * 2-veis sync av playstate
+ * Ikke oppdatere people hvis lik
 
  Serier
   * shittload

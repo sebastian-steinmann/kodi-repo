@@ -135,6 +135,9 @@ class Movies(object):
             movie.get('poster'), movieid, 'poster', 'movie')
         self.kodi_db.add_update_art(movie.get('poster'), movieid, 'thumb', 'movie')
         self.kodi_db.add_genres(movieid, movie.get('genres'))
+        # self.kodi_db.set_streamdetails(**movie)
+        self._sync_tags(movie)
+
 
         self._add_people(movieid, movie)
 
@@ -243,8 +246,26 @@ class Movies(object):
         all_refs = self.kodi_db.get_movie_refs()
         release_set = set(release_ids)
         return [{'media_id': media_id, 'title': title, 'idFile': idFile}
-            for media_id, release_id, title, idFile in all_refs
-            if int(release_id) not in release_set]
+                for media_id, release_id, title, idFile in all_refs
+                if int(release_id) not in release_set]
+
+    def _sync_tags(self, movie):
+        movieid = movie.get('movieid')
+        current_tags = self.kodi_db.get_tags(movieid)
+        remote_tags = movie.get('tags') or []
+
+        removed_tags = [
+            tag_id for tag_id, name, uniqueid in current_tags
+            if name not in remote_tags and uniqueid
+            ]
+
+        self.kodi_db.remove_tag_links(movieid, removed_tags)
+
+        current_tag_names = [tag for tag_id, tag, uniqueid in current_tags]
+        new_tags = [tag for tag in remote_tags if tag not in current_tag_names]
+
+        self.kodi_db.add_tags(movieid, new_tags)
+
 
     @abstractmethod
     def _should_update(self, orgMovie, newMovie):
@@ -258,7 +279,7 @@ class IncrementalMovieUpdater(Movies):
         return 'Incremental Update'
 
     def _should_update(self, orgMovie, newMovie):
-        return (orgMovie.get('version') != newMovie.get('version'))
+        return orgMovie.get('version') != newMovie.get('version')
 
 class FullMovieUpdater(Movies):
     ''' Updates all movies regardless of last update '''
