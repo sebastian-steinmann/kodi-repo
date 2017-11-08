@@ -115,13 +115,11 @@ class KodiMovies(object):
         self.cursor.execute(query, kvargs)
 
     def get_filename(self, file_id):
-
-        query = ' '.join((
-
-            "SELECT strFilename",
-            "FROM files",
-            "WHERE idFile = ?"
-        ))
+        query = '''
+            SELECT strFilename
+            FROM files
+            WHERE idFile = ?
+        '''
         self.cursor.execute(query, (file_id,))
         try:
             filename = self.cursor.fetchone()[0]
@@ -148,7 +146,11 @@ class KodiMovies(object):
             LEFT JOIN movie on (u.media_id = movie.idMovie)
 			LEFT JOIN files on (files.idFile = movie.idFile)
 			LEFT JOIN path on (path.idPath = files.idPath)
-            LEFT JOIN uniqueid imdb_uid on (imdb_uid.media_type = 'movie' and imdb_uid.type = 'imdb' and imdb_uid.media_id = movie.idMovie)
+            LEFT JOIN uniqueid imdb_uid on (
+                imdb_uid.media_type = 'movie' AND
+                imdb_uid.type = 'imdb' AND
+                imdb_uid.media_id = movie.idMovie
+            )
             WHERE u.media_type = 'movie' and u.type = 'release'
             and u.value = ?
         ''')
@@ -165,7 +167,11 @@ class KodiMovies(object):
             LEFT JOIN movie on (u.media_id = movie.idMovie)
 			LEFT JOIN files on (files.idFile = movie.idFile)
 			LEFT JOIN path on (path.idPath = files.idPath)
-            LEFT JOIN uniqueid release_uid on (release_uid.media_type = 'movie' and release_uid.type = 'release' and release_uid.media_id = movie.idMovie)
+            LEFT JOIN uniqueid release_uid on (
+                release_uid.media_type = 'movie' AND
+                release_uid.type = 'release' AND
+                release_uid.media_id = movie.idMovie
+            )
             WHERE u.media_type = 'movie' and u.type in ('unknown', 'imdb')
             and u.value = ? and release_uid.uniqueid_id is null
         ''')
@@ -281,27 +287,53 @@ class KodiMovies(object):
 
         self.cursor.execute(query, (fileid, language, language))
 
+    def _add_genre_link(self, kodi_id, genre_id):
+        query = (
+            '''
+            INSERT OR REPLACE INTO genre_link(
+                genre_id, media_id, media_type)
+            VALUES (?, ?, ?)
+            '''
+        )
+        self.cursor.execute(query, (genre_id, kodi_id, 'movie'))
+
+
     def add_genres(self, kodi_id, genres):
 
-        # Delete current genres for clean slate
+
+        self.cursor.execute('''
+            SELECT genre.genre_id, genre.name, genre_link.genre_id FROM genre
+            LEFT JOIN genre_link on (
+                genre_link.genre_id = genre.genre_id and
+                genre_link.media_id = ? and
+                genre_link.media_type = 'movie'
+            )
+            WHERE (genre.name in (?) OR genre_link.genre_id is not NULL);
+        ''', (kodi_id, ','.join(genres)))
+
+        current_genres = self.cursor.fetchall()
+
+        removed_genres = [genre_id for genre_id, name, link in current_genres if name not in genres]
+        # Delete removed genres
         query = '''
             DELETE FROM genre_link
             WHERE media_id = ?
             AND media_type = ?
+            AND genre_id in (?)
         '''
-        self.cursor.execute(query, (kodi_id, 'movie',))
+        self.cursor.execute(query, (kodi_id, 'movie', ','.join(map(str, removed_genres))))
+
+        existing_genres = [genre_id for genre_id, name, link in current_genres if not link]
+        for genre_id in existing_genres:
+            self._add_genre_link(kodi_id, genre_id)
+
+        current_tag_names = set([name for _, name, _ in current_genres])
+        new_genres = [name for name in genres if name not in current_tag_names]
 
         # Add genres
-        for genre in genres:
-            genre_id = self._get_genre(genre)
-            query = (
-                '''
-                INSERT OR REPLACE INTO genre_link(
-                    genre_id, media_id, media_type)
-                VALUES (?, ?, ?)
-                '''
-            )
-            self.cursor.execute(query, (genre_id, kodi_id, 'movie'))
+        for genre in new_genres:
+            genre_id = self._add_genre(genre)
+            self._add_genre_link(kodi_id, genre_id)
 
     def _add_genre(self, genre):
         query = "INSERT INTO genre(name) values(?)"
@@ -605,22 +637,25 @@ class KodiMovies(object):
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
-    def get_tags(self, movieid):
+    def get_tags(self, movieid, remote_tags):
         ''' Gets tags for media_id with external ref '''
         query = '''
-            SELECT tag.tag_id, tag.name, uniqueid_id FROM tag_link
-            LEFT JOIN tag on (tag.tag_id = tag_link.tag_id)
-            LEFT JOIN uniqueid uid on (
+            select tag.tag_id, tag.name, uniqueid_id, tl.tag_id as existing from tag
+            left join tag_link tl on (
+                tl.media_id = ? and
+                tl.media_type = 'movie' and
+                tl.tag_id = tag.tag_id
+            )
+            left join uniqueid uid on (
                 uid.media_id = ? AND
                 uid.media_type = 'movie' AND
                 uid.type = 'external_tag' AND
                 uid.value = tag.tag_id
             )
-            WHERE tag_link.media_id = ?
-            AND tag_link.media_type = 'movie'
+            where (tag.name in (?) or tl.tag_id is not NULL);
         '''
 
-        self.cursor.execute(query, (movieid, movieid))
+        self.cursor.execute(query, (movieid, movieid, ','.join(remote_tags)))
         return self.cursor.fetchall()
 
     def remove_tag_links(self, moveid, tags):
@@ -660,21 +695,29 @@ class KodiMovies(object):
             self.cursor.execute(query, (tag,))
             return self.cursor.lastrowid
 
-    def add_tags(self, movieid, tags):
-        if not tags:
-            return
+    def add_tag_links(self, movieid, tag_ids):
+        for tag_id in tag_ids:
+            self._add_tag_link(movieid, tag_id)
 
+    def _add_tag_link(self, movieid, tag_id):
+        query = '''
+            INSERT INTO tag_link
+            (tag_id, media_id, media_type)
+            VALUES (?, ?, 'movie')
+        '''
+        try:
+            self.cursor.execute(query, (tag_id, movieid))
+        except:
+            log.error("failed to insert tagid: %s, movieid %s", tag_id, movieid)
+
+        query = '''
+            INSERT INTO uniqueid
+            (media_id, media_type, type, value)
+            VALUES (?, 'movie', 'external_tag', ?)
+        '''
+        self.cursor.execute(query, (movieid, tag_id))
+
+    def add_tags(self, movieid, tags):
         for tag in tags:
             tag_id = self._get_or_add_tag(tag)
-            query = '''
-                INSERT INTO tag_link
-                (tag_id, media_id, media_type)
-                VALUES (?, ?, 'movie')
-            '''
-            self.cursor.execute(query, (tag_id, movieid))
-            query = '''
-                INSERT INTO uniqueid
-                (media_id, media_type, type, value)
-                VALUES (?, 'movie', 'external_tag', ?)
-            '''
-            self.cursor.execute(query, (movieid, tag_id))
+            self._add_tag_link(movieid, tag_id)

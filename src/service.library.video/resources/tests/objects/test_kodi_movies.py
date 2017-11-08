@@ -65,10 +65,9 @@ class TestKodiMovies(unittest.TestCase):
         media_id = 1
 
         self.kodi_movies.add_tags(media_id, remote_tags)
-        res = self.kodi_movies.get_tags(media_id)
-        remote_tag_names = [name for tag_id, name, uid in res if uid]
+        res = self.kodi_movies.get_tags(media_id, remote_tags)
+        remote_tag_names = [name for _, name, uid, _ in res if uid]
         self.assertItemsEqual(remote_tags, remote_tag_names)
-
 
     def test_should_get_tags(self):
         remote_tags = ['test']
@@ -76,8 +75,8 @@ class TestKodiMovies(unittest.TestCase):
         media_id = 1
         self.kodi_movies.add_tags(media_id, remote_tags)
 
-        res = self.kodi_movies.get_tags(media_id)
-        res_names = [name for tag_id, name, uid in res]
+        res = self.kodi_movies.get_tags(media_id, remote_tags)
+        res_names = [name for tag_id, name, uid, _ in res]
         self.assertItemsEqual(remote_tags, res_names)
 
     def test_should_get_external_and_internal_tags(self):
@@ -88,11 +87,11 @@ class TestKodiMovies(unittest.TestCase):
         self.kodi_movies.add_tags(media_id, remote_tags)
         self._add_internal_tags(media_id, internal_tags)
 
-        res = self.kodi_movies.get_tags(media_id)
-        res_names = [name for tag_id, name, uid in res]
+        res = self.kodi_movies.get_tags(media_id, remote_tags)
+        res_names = [name for _, name, _, _ in res]
         self.assertItemsEqual(['test', 'test2'], res_names)
 
-        remote_tag_names = [name for tag_id, name, uid in res if uid]
+        remote_tag_names = [name for _, name, uid, _ in res if uid]
         self.assertItemsEqual(remote_tags, remote_tag_names)
 
     def test_should_remove_tags(self):
@@ -102,7 +101,7 @@ class TestKodiMovies(unittest.TestCase):
         self.kodi_movies.add_tags(media_id, remote_tags)
 
         self.kodi_movies.remove_tag_links(media_id, [2])
-        res = self.kodi_movies.get_tags(media_id)
+        res = self.kodi_movies.get_tags(media_id, remote_tags)
         self.assertEqual(1, len(res))
         self.assertEqual('test', res[0][1])
 
@@ -112,8 +111,16 @@ class TestKodiMovies(unittest.TestCase):
         media_id = 1
 
         self.kodi_movies.add_tags(media_id, remote_tags)
-        res = self.kodi_movies.get_tags(media_id)
-        self.assertItemsEqual((tag_id, 'test', 1), res[0])
+        res = self.kodi_movies.get_tags(media_id, remote_tags)
+        self.assertItemsEqual((tag_id, 'test', 1, tag_id), res[0])
+
+    def test_should_get_existing_tags_from_get(self):
+        tag_id = self._add_tag('test')
+        remote_tags = ['test']
+        media_id = 1
+
+        res = self.kodi_movies.get_tags(media_id, remote_tags)
+        self.assertTupleEqual((tag_id, 'test', None, None), res[0])
 
     def tearDown(self):
         self.cursor.close()

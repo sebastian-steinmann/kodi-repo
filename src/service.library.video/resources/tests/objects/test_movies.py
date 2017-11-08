@@ -376,8 +376,7 @@ class MoviesTests(unittest.TestCase):
     def test_should_do_nithing_if_tags_equal(self, mock_movies):
         db = mock_movies.return_value
 
-        db.get_tags.return_value = [
-        ]
+        db.get_tags.return_value = []
         new_tags = ['Drama', 'Comedy']
         movieid = 12
         movie = {
@@ -395,8 +394,8 @@ class MoviesTests(unittest.TestCase):
         db = mock_movies.return_value
 
         db.get_tags.return_value = [
-            (1, 'Drama', 12),
-            (2, 'Romance', 13)
+            (1, 'Drama', 12, 1),
+            (2, 'Romance', 13, 2)
         ]
         new_tags = ['Drama']
         movieid = 12
@@ -415,7 +414,7 @@ class MoviesTests(unittest.TestCase):
         db = mock_movies.return_value
 
         db.get_tags.return_value = [
-            (1, 'Drama', 12)
+            (1, 'Drama', 12, 1)
         ]
         new_tags = ['Drama', 'Comedy']
         movieid = 12
@@ -435,9 +434,9 @@ class MoviesTests(unittest.TestCase):
         db = mock_movies.return_value
 
         db.get_tags.return_value = [
-            (1, 'Drama', 12),
-            (2, 'Romance', 13),
-            (3, 'Test', None)
+            (1, 'Drama', 12, 1),
+            (2, 'Romance', 13, 2),
+            (3, 'Test', None, 3)
         ]
         new_tags = ['Drama']
         movieid = 12
@@ -450,3 +449,24 @@ class MoviesTests(unittest.TestCase):
 
         db.remove_tag_links.assert_called_with(movieid, [2])
         db.add_tags.assert_called_with(movieid, [])
+
+    @patch('resources.lib.objects.movies.KodiMovies')
+    def test_should_reuse_tag_id(self, mock_movies):
+        db = mock_movies.return_value
+
+        db.get_tags.return_value = [
+            (1, 'Drama', 12, 1),
+            (2, 'Comedy', None, None)
+        ]
+        new_tags = ['Drama', 'Comedy', 'Action']
+        movieid = 12
+        movie = {
+            'movieid': movieid,
+            'tags': new_tags
+        }
+        movies = FullMovieUpdater(MagicMock())
+        movies._sync_tags(movie)
+
+        db.remove_tag_links.assert_called_with(movieid, [])
+        db.add_tag_links.assert_called_with(movieid, [2])
+        db.add_tags.assert_called_with(movieid, ['Action'])

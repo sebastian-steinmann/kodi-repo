@@ -251,19 +251,21 @@ class Movies(object):
 
     def _sync_tags(self, movie):
         movieid = movie.get('movieid')
-        current_tags = self.kodi_db.get_tags(movieid)
         remote_tags = movie.get('tags') or []
+        current_tags = self.kodi_db.get_tags(movieid, remote_tags)
 
         removed_tags = [
-            tag_id for tag_id, name, uniqueid in current_tags
+            tag_id for tag_id, name, uniqueid, _ in current_tags
             if name not in remote_tags and uniqueid
-            ]
+        ]
 
         self.kodi_db.remove_tag_links(movieid, removed_tags)
 
-        current_tag_names = [tag for tag_id, tag, uniqueid in current_tags]
+        current_tag_names = [tag for _, tag, _, _ in current_tags]
+        existing_new_tags = [tag_id for tag_id, name, _, tag_link in current_tags if not tag_link]
         new_tags = [tag for tag in remote_tags if tag not in current_tag_names]
 
+        self.kodi_db.add_tag_links(movieid, existing_new_tags)
         self.kodi_db.add_tags(movieid, new_tags)
 
 
