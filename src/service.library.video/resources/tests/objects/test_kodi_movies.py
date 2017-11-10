@@ -41,6 +41,12 @@ class TestKodiMovies(unittest.TestCase):
         self.cursor.execute('''
             CREATE TABLE uniqueid (uniqueid_id INTEGER PRIMARY KEY, media_id INTEGER, media_type TEXT, value TEXT, type TEXT)
         ''')
+        self.cursor.execute('CREATE TABLE genre ( genre_id integer primary key, name TEXT)')
+        self.cursor.execute('CREATE TABLE genre_link (genre_id integer, media_id integer, media_type TEXT)')
+        self.cursor.execute('CREATE INDEX ix_genre_link_3 ON genre_link (media_type)')
+        self.cursor.execute('CREATE UNIQUE INDEX ix_genre_1 ON genre (name)')
+        self.cursor.execute('CREATE UNIQUE INDEX ix_genre_link_1 ON genre_link (genre_id, media_type, media_id)')
+        self.cursor.execute('CREATE UNIQUE INDEX ix_genre_link_2 ON genre_link (media_id, media_type, genre_id)')
 
     def _add_tag(self, tag):
         query = '''
@@ -121,6 +127,21 @@ class TestKodiMovies(unittest.TestCase):
 
         res = self.kodi_movies.get_tags(media_id, remote_tags)
         self.assertTupleEqual((tag_id, 'test', None, None), res[0])
+
+    def test_should_not_add_genre_with_case(self):
+        tag_id = self.kodi_movies._add_genre('test')
+        remote_genres = ['Test']
+        media_id = 1
+
+        self.kodi_movies.add_genres(media_id, remote_genres)
+        res = self.kodi_movies._get_genre("Test")
+
+    def test_should_not_add_genre_with_case2(self):
+        self.kodi_movies._add_genre('Test')
+        remote_genres = ['Test']
+        media_id = 1
+
+        self.kodi_movies.add_genres(media_id, remote_genres)
 
     def tearDown(self):
         self.cursor.close()

@@ -303,17 +303,17 @@ class KodiMovies(object):
 
         self.cursor.execute('''
             SELECT genre.genre_id, genre.name, genre_link.genre_id FROM genre
-            LEFT JOIN genre_link on (
+            LEFT OUTER JOIN genre_link on (
                 genre_link.genre_id = genre.genre_id and
                 genre_link.media_id = ? and
                 genre_link.media_type = 'movie'
             )
-            WHERE (genre.name in (?) OR genre_link.genre_id is not NULL);
+            WHERE (genre.name in (?) OR genre_link.genre_id is not NULL)
+            COLLATE NOCASE;
         ''', (kodi_id, ','.join(genres)))
 
         current_genres = self.cursor.fetchall()
-
-        removed_genres = [genre_id for genre_id, name, link in current_genres if name not in genres]
+        removed_genres = [genre_id for genre_id, name, link in current_genres if name not in set(genres)]
         # Delete removed genres
         query = '''
             DELETE FROM genre_link
@@ -328,6 +328,7 @@ class KodiMovies(object):
             self._add_genre_link(kodi_id, genre_id)
 
         current_tag_names = set([name for _, name, _ in current_genres])
+
         new_genres = [name for name in genres if name not in current_tag_names]
 
         # Add genres
@@ -336,7 +337,7 @@ class KodiMovies(object):
             self._add_genre_link(kodi_id, genre_id)
 
     def _add_genre(self, genre):
-        query = "INSERT INTO genre(name) values(?)"
+        query = "INSERT INTO genre(name) values (?)"
         self.cursor.execute(query, (genre,))
         log.debug("Add Genres to media, processing: %s", genre)
 
@@ -608,7 +609,7 @@ class KodiMovies(object):
     def _add_person(self, name, thumb_url):
         query = "INSERT INTO actor (name, art_urls) values(?, ?)"
         art_urls = "<thumb>%s</thumb>" % thumb_url
-        self.cursor.execute(query, (name,art_urls,))
+        self.cursor.execute(query, (name, art_urls,))
         log.debug("Add people to media, processing: %s", name)
 
         return self.cursor.lastrowid
@@ -641,12 +642,12 @@ class KodiMovies(object):
         ''' Gets tags for media_id with external ref '''
         query = '''
             select tag.tag_id, tag.name, uniqueid_id, tl.tag_id as existing from tag
-            left join tag_link tl on (
+            left outer join tag_link tl on (
                 tl.media_id = ? and
                 tl.media_type = 'movie' and
                 tl.tag_id = tag.tag_id
             )
-            left join uniqueid uid on (
+            left outer join uniqueid uid on (
                 uid.media_id = ? AND
                 uid.media_type = 'movie' AND
                 uid.type = 'external_tag' AND
