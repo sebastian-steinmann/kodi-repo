@@ -34,6 +34,10 @@ class DateUtils(object):
             return datetime.strptime(str_date, date_format)
         except TypeError:
             return datetime(*(time.strptime(str_date, date_format)[0:6]))
+    def parse_kodi_date(self, str_date):
+        if not str_date:
+            return None
+        return self._parse_str_date(str_date, '%Y-%m-%d %H:%M:%S')
 
     def get_kodi_date_format(self, str_date):
         """
