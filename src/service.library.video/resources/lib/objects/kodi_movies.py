@@ -297,22 +297,23 @@ class KodiMovies(object):
         )
         self.cursor.execute(query, (genre_id, kodi_id, 'movie'))
 
-
-    def add_genres(self, kodi_id, genres):
-
-
-        self.cursor.execute('''
+    def _get_genres(self, kodi_id, genres):
+        query = self._in_array_query('''
             SELECT genre.genre_id, genre.name, genre_link.genre_id FROM genre
             LEFT OUTER JOIN genre_link on (
-                genre_link.genre_id = genre.genre_id and
-                genre_link.media_id = ? and
+                genre_link.genre_id = genre.genre_id AND
+                genre_link.media_id = ? AND
                 genre_link.media_type = 'movie'
             )
-            WHERE (genre.name in (?) OR genre_link.genre_id is not NULL)
+            WHERE (genre.name in (%s) OR genre_link.genre_id is not NULL)
             COLLATE NOCASE;
-        ''', (kodi_id, ','.join(genres)))
+        ''', genres)
+        self.cursor.execute(query, (kodi_id,))
 
-        current_genres = self.cursor.fetchall()
+        return self.cursor.fetchall()
+
+    def add_genres(self, kodi_id, genres):
+        current_genres = self._get_genres(kodi_id, genres)
         removed_genres = [genre_id for genre_id, name, link in current_genres if name not in set(genres)]
         # Delete removed genres
         query = '''
@@ -640,7 +641,7 @@ class KodiMovies(object):
 
     def get_tags(self, movieid, remote_tags):
         ''' Gets tags for media_id with external ref '''
-        query = '''
+        query = self._in_array_query('''
             select tag.tag_id, tag.name, uniqueid_id, tl.tag_id as existing from tag
             left outer join tag_link tl on (
                 tl.media_id = ? and
@@ -653,10 +654,10 @@ class KodiMovies(object):
                 uid.type = 'external_tag' AND
                 uid.value = tag.tag_id
             )
-            where (tag.name in (?) or tl.tag_id is not NULL);
-        '''
+            where (tag.name in (%s) or tl.tag_id is not NULL);
+        ''', remote_tags)
 
-        self.cursor.execute(query, (movieid, movieid, ','.join(remote_tags)))
+        self.cursor.execute(query, (movieid, movieid))
         return self.cursor.fetchall()
 
     def remove_tag_links(self, moveid, tags):
@@ -668,6 +669,7 @@ class KodiMovies(object):
             WHERE tag_id in (?)
             AND media_id = ?
             AND media_type = 'movie'
+            COLLATE NOCASE
         '''
         self.cursor.execute(query, (','.join(map(str, tags)), moveid))
 
@@ -677,6 +679,7 @@ class KodiMovies(object):
             AND media_id = ?
             AND media_type = 'movie'
             AND type = 'external_tag'
+            COLLATE NOCASE
         '''
         self.cursor.execute(query, (','.join(map(str, tags)), moveid))
 
@@ -686,7 +689,7 @@ class KodiMovies(object):
             where name = ?
             COLLATE NOCASE
         '''
-        self.cursor.execute(query, (str(tag),))
+        self.cursor.execute(query, (tag,))
         try:
             return self.cursor.fetchone()[0]
         except TypeError: # Add the artwork
@@ -722,3 +725,7 @@ class KodiMovies(object):
         for tag in tags:
             tag_id = self._get_or_add_tag(tag)
             self._add_tag_link(movieid, tag_id)
+
+
+    def _in_array_query(self, query, array):
+        return query % ','.join("'%s'" % str(l) for l in array)

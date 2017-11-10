@@ -107,7 +107,7 @@ class TestKodiMovies(unittest.TestCase):
         self.kodi_movies.add_tags(media_id, remote_tags)
 
         self.kodi_movies.remove_tag_links(media_id, [2])
-        res = self.kodi_movies.get_tags(media_id, remote_tags)
+        res = self.kodi_movies.get_tags(media_id, ['test'])
         self.assertEqual(1, len(res))
         self.assertEqual('test', res[0][1])
 
@@ -122,26 +122,44 @@ class TestKodiMovies(unittest.TestCase):
 
     def test_should_get_existing_tags_from_get(self):
         tag_id = self._add_tag('test')
-        remote_tags = ['test']
+        remote_tags = ['test', 'best']
         media_id = 1
 
         res = self.kodi_movies.get_tags(media_id, remote_tags)
         self.assertTupleEqual((tag_id, 'test', None, None), res[0])
 
-    def test_should_not_add_genre_with_case(self):
-        tag_id = self.kodi_movies._add_genre('test')
-        remote_genres = ['Test']
+    def test_should_get_existing_genres(self):
         media_id = 1
 
-        self.kodi_movies.add_genres(media_id, remote_genres)
-        res = self.kodi_movies._get_genre("Test")
-
-    def test_should_not_add_genre_with_case2(self):
         self.kodi_movies._add_genre('Test')
+        genre_id = self.kodi_movies._get_genre('Test')
+        self.assertEqual(1, genre_id)
         remote_genres = ['Test']
+        res = self.kodi_movies._get_genres(media_id, remote_genres)
+        expected = [(genre_id, u'Test', None)]
+        self.assertListEqual(expected, res)
+
+    def test_should_get_existing_genres_multiple(self):
         media_id = 1
 
+        self.kodi_movies._add_genre('Test')
+        genre_id = self.kodi_movies._get_genre('Test')
+        self.assertEqual(1, genre_id)
+        remote_genres = ['Test', 'Drama']
+        res = self.kodi_movies._get_genres(media_id, remote_genres)
+        expected = [(genre_id, u'Test', None)]
+        self.assertListEqual(expected, res)
+
+    """
+    def test_should_not_add_genre_with_case3(self):
+        media_id = 1
+
+        self.kodi_movies._add_genre('Test')
+        self.kodi_movies.add_genres(media_id, ['Drama'])
+
+        remote_genres = ['Test', 'Drama']
         self.kodi_movies.add_genres(media_id, remote_genres)
+        """
 
     def tearDown(self):
         self.cursor.close()
