@@ -396,12 +396,12 @@ class KodiMovies(object):
 
         return studio_id
 
-    def remove_movie(self, kodi_id, file_id):
-        self.cursor.execute("DELETE FROM movie WHERE idMovie = ?", (kodi_id,))
+    def remove_movie(self, media_id, file_id):
+        self.cursor.execute("DELETE FROM movie WHERE idMovie = ?", (media_id,))
         self.cursor.execute("DELETE FROM files WHERE idFile = ?", (file_id,))
+        self.cursor.execute("DELETE FROM uniqueid WHERE media_id = ? and media_type = 'movie'", (media_id,))
 
     def get_ratingid(self, media_id):
-
         query = "SELECT rating_id FROM rating WHERE media_id = ?"
         self.cursor.execute(query, (media_id,))
         try:

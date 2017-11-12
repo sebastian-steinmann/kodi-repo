@@ -233,7 +233,7 @@ class Movies(object):
         return None
 
     def delete(self, movie):
-        self.kodi_db.remove_movie(movie['movie_id'], movie['idFile'])
+        self.kodi_db.remove_movie(movie['media_id'], movie['idFile'])
 
     def get_movies_to_remove(self, release_ids):
         '''
