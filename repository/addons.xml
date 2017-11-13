@@ -27,7 +27,7 @@
             1.1.1 Fikset riktig link til addons.xml
         </news>
     </extension>
-</addon><addon id="service.library.video" name="Video lib sync" provider-name="Steinmann" version="0.4.4">
+</addon><addon id="service.library.video" name="Video lib sync" provider-name="Steinmann" version="0.4.5">
   <requires>
     <import addon="xbmc.python" version="2.14.0" />
     <import addon="script.module.requests" version="2.9.1" />
@@ -45,6 +45,8 @@
     <email />
     <source />
     <news>
+    0.4.5
+    * Hardening på fjerning av filmer
     0.4.4
     * Fikset feil med fjerning av filmer
     0.4.3

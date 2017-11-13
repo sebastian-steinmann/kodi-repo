@@ -73,17 +73,24 @@ class Library(threading.Thread):
     def _start_sync(self):
         if self._should_sync():
             xbmc.executebuiltin('InhibitIdleShutdown(true)')
-            start_time = datetime.now()
+            try:
+                start_time = datetime.now()
 
-            total, count = self.update()
-            if not self._should_stop():
-                self.set_last_sync(start_time)
+                total, count = self.update()
+                if not self._should_stop():
+                    self.set_last_sync(start_time)
 
-            elapsedtotal = datetime.now() - start_time
-            log.info("%s av %s filmer lagt til. Det tok %s",
-                    count, total, str(elapsedtotal).split('.')[0])
+                elapsedtotal = datetime.now() - start_time
+                log.info("%s av %s filmer lagt til. Det tok %s",
+                        count, total, str(elapsedtotal).split('.')[0])
+            except Exception as e:
+                log.error(e)
 
-            xbmc.executebuiltin('InhibitIdleShutdown(false)')
+            finally:
+                window('dings_kodiScan', clear=True)
+                if self.pdialog:
+                    self.pdialog.close()
+                xbmc.executebuiltin('InhibitIdleShutdown(false)')
 
     def show_progress(self, title):
         dialog = None
@@ -108,6 +115,7 @@ class Library(threading.Thread):
         all_release_ids = [m.get('id') for m in all_movies]
         window("dings_kodiscan", "true")
         with database.DatabaseConn() as cursor_video:
+            self.pdialog = self.show_progress("Deleting movies")
             movies_db = FullMovieUpdater(cursor_video)
             movies_for_wipe = movies_db.get_movies_to_remove(all_release_ids)
             log.info("Found %s movies to remove", len(movies_for_wipe))
@@ -116,15 +124,22 @@ class Library(threading.Thread):
                 movies_db.delete(movie)
                 log.info("Removed %s because it was not on remote", movie['title'])
 
+            if self.pdialog:
+                self.pdialog.close()
+
             window("dings_kodiscan", clear=True)
+
+            log.info("Removing files done")
 
     def _full_update(self):
         start_time = datetime.now()
         all_movies = self.api.get_all_movies()
         total, count = self._do_update(all_movies, FullMovieUpdater)
 
-        if not self._should_stop():
+        if not self._should_stop() and not self.monitor.waitForAbort(5):
             self._delete_missing_movies(all_movies)
+
+        if not self._should_stop() and not self.monitor.waitForAbort():
             self.save_last_full_sync(start_time)
 
         return total, count
@@ -138,7 +153,7 @@ class Library(threading.Thread):
         if self._should_stop():
             return 0, 0
 
-        lCount = 0
+        l_count = 0
         total = len(movies)
 
         window("dings_kodiscan", "true")
@@ -150,7 +165,7 @@ class Library(threading.Thread):
                 if movies_db.update(movie):
                     log.debug("La til filmen %s id: %s, r: %s. %s/%s",
                               movie.get('title'), movie.get('imdb'), movie.get('id'), self.count, total)
-                    lCount += 1
+                    l_count += 1
 
             window('dings_kodiScan', clear=True)
 
@@ -158,7 +173,7 @@ class Library(threading.Thread):
             self.pdialog.close()
 
         # xbmc.executebuiltin('UpdateLibrary(video)')
-        return total, lCount
+        return total, l_count
 
     def save_last_full_sync(self, last_sync):
         """

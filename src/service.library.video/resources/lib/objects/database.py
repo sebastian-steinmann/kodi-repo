@@ -80,7 +80,7 @@ class DatabaseConn(object):
             # Errors were raised in the with statement
             log.error("Type: %s Value: %s", exc_type, exc_val)
 
-        if self.commit_on_close == True and changes:
+        if self.commit_on_close and changes:
             log.info("number of rows updated: %s", changes)
             kodi_commit() # Wait til end
             self.conn.commit()
