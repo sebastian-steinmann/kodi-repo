@@ -114,8 +114,9 @@ class Library(threading.Thread):
     def _delete_missing_movies(self, all_movies):
         all_release_ids = [m.get('id') for m in all_movies]
         window("dings_kodiscan", "true")
+        self.pdialog = self.show_progress("Deleting movies")
+
         with database.DatabaseConn() as cursor_video:
-            self.pdialog = self.show_progress("Deleting movies")
             movies_db = FullMovieUpdater(cursor_video)
             movies_for_wipe = movies_db.get_movies_to_remove(all_release_ids)
             log.info("Found %s movies to remove", len(movies_for_wipe))
@@ -124,12 +125,13 @@ class Library(threading.Thread):
                 movies_db.delete(movie)
                 log.info("Removed %s because it was not on remote", movie['title'])
 
-            if self.pdialog:
-                self.pdialog.close()
+
 
             window("dings_kodiscan", clear=True)
 
-            log.info("Removing files done")
+        if self.pdialog:
+                self.pdialog.close()
+        log.info("Removing files done")
 
     def _full_update(self):
         start_time = datetime.now()

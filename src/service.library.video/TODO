@@ -6,8 +6,7 @@
  * 2-vei sync av watched
   * tracke på imdb-id og ikke Release
   * bruke lastPlayed og dateAdded
-  * krever tabell i db
- * 2-veis sync av playstate
+ * 2-veis sync av playstate pr file
  * Ikke oppdatere people hvis lik
 
  Serier
