@@ -244,8 +244,8 @@ class KodiMovies(object):
             None,
             country,
             released,
-            full_path,
-            pathid
+            # full_path,
+            # pathid
         '''
 
         query = '''
@@ -315,21 +315,21 @@ class KodiMovies(object):
     def add_genres(self, kodi_id, genres):
         current_genres = self._get_genres(kodi_id, genres)
         removed_genres = [genre_id for genre_id, name, link in current_genres if name not in set(genres)]
-        # Delete removed genres
-        query = '''
-            DELETE FROM genre_link
-            WHERE media_id = ?
-            AND media_type = ?
-            AND genre_id in (?)
-        '''
-        self.cursor.execute(query, (kodi_id, 'movie', ','.join(map(str, removed_genres))))
+        if removed_genres:
+            # Delete removed genres
+            query = '''
+                DELETE FROM genre_link
+                WHERE media_id = ?
+                AND media_type = ?
+                AND genre_id in (?)
+            '''
+            self.cursor.execute(query, (kodi_id, 'movie', ','.join(map(str, removed_genres))))
 
         existing_genres = [genre_id for genre_id, name, link in current_genres if not link]
         for genre_id in existing_genres:
             self._add_genre_link(kodi_id, genre_id)
 
         current_tag_names = set([name for _, name, _ in current_genres])
-
         new_genres = [name for name in genres if name not in current_tag_names]
 
         # Add genres
@@ -528,7 +528,6 @@ class KodiMovies(object):
                 query = (
                     '''
                     INSERT INTO art(media_id, media_type, type, url)
-
                     VALUES (?, ?, ?, ?)
                     '''
                 )

@@ -125,12 +125,10 @@ class Library(threading.Thread):
                 movies_db.delete(movie)
                 log.info("Removed %s because it was not on remote", movie['title'])
 
-
-
             window("dings_kodiscan", clear=True)
 
         if self.pdialog:
-                self.pdialog.close()
+            self.pdialog.close()
         log.info("Removing files done")
 
     def _full_update(self):
@@ -138,10 +136,8 @@ class Library(threading.Thread):
         all_movies = self.api.get_all_movies()
         total, count = self._do_update(all_movies, FullMovieUpdater)
 
-        if not self._should_stop() and not self.monitor.waitForAbort(5):
+        if not self._should_stop():
             self._delete_missing_movies(all_movies)
-
-        if not self._should_stop() and not self.monitor.waitForAbort():
             self.save_last_full_sync(start_time)
 
         return total, count

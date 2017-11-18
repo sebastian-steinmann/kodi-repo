@@ -96,6 +96,7 @@ class Movies(object):
         self.kodi_db.add_movie(**movie_entity)
 
         self._add_or_update_meta(movie_entity)
+        self._add_people(movie_entity)
         return True
 
 
@@ -118,8 +119,9 @@ class Movies(object):
 
         return result
 
-    def _add_people(self, movieid, movie):
+    def _add_people(self, movie):
         thumb = None
+        movieid = movie.get('id')
         people = [{'Name': actor, 'Type': 'Actor'}
                   for actor in movie.get('actors')]
         people.extend([{'Name': writer, 'Type': 'Writer'}
@@ -131,15 +133,14 @@ class Movies(object):
 
     def _add_or_update_meta(self, movie):
         movieid = movie.get('movieid')
-        self.kodi_db.add_update_art(
-            movie.get('poster'), movieid, 'poster', 'movie')
+        self.kodi_db.add_update_art(movie.get('poster'), movieid, 'poster', 'movie')
         self.kodi_db.add_update_art(movie.get('poster'), movieid, 'thumb', 'movie')
         self.kodi_db.add_genres(movieid, movie.get('genres'))
         # self.kodi_db.set_streamdetails(**movie)
         self._sync_tags(movie)
 
 
-        self._add_people(movieid, movie)
+        # self._add_people(movie)
 
     def _get_imdb_unique_id(self, movie):
         """

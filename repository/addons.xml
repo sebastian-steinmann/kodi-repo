@@ -27,7 +27,7 @@
             1.1.1 Fikset riktig link til addons.xml
         </news>
     </extension>
-</addon><addon id="service.library.video" name="Video lib sync" provider-name="Steinmann" version="0.4.6">
+</addon><addon id="service.library.video" name="Video lib sync" provider-name="Steinmann" version="0.4.7">
   <requires>
     <import addon="xbmc.python" version="2.14.0" />
     <import addon="script.module.requests" version="2.9.1" />
@@ -45,6 +45,9 @@
     <email />
     <source />
     <news>
+    0.4.7
+    * Skrudd av actor-sync ved update, kun initial insert
+    * Fikset full-sync
     0.4.6
     * Endret litt på struktur rundt fjerning
     0.4.5
