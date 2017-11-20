@@ -109,6 +109,6 @@ class Artwork(object):
                 requests.head(url=("http://%s:%s/image/image://%s"
                                     % (self.xbmc_host, self.xbmc_port, url)),
                                 auth=(self.xbmc_username, self.xbmc_password),
-                                timeout=(0.01, 0.01))
+                                timeout=(0.1, 0.1))
             except Exception: # We don't need the result
                 pass

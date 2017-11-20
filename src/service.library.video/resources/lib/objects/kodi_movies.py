@@ -189,8 +189,8 @@ class KodiMovies(object):
         query = (
             '''
             INSERT INTO movie(
-                idMovie, idFile, c00, c01, c02, c03, c04, c05, c06, c07,
-                c09, c10, c11, c12, c14, c15, c16, c18, c19, c21, premiered, c22, c23)
+                idMovie, idFile, c00, c01, c02, c03, c04, c05, c06, c07, c08,
+                c09, c10, c11, c12, c14, c15, c16, c18, c19, c20, c21, premiered, c22, c23)
 
             VALUES (
                 :movieid,
@@ -202,6 +202,7 @@ class KodiMovies(object):
                 :votecount,
                 :ratingid,
                 :writers_list,
+                :thumbs_xml,
                 :year,
                 :imdb,
                 :title,
@@ -211,6 +212,7 @@ class KodiMovies(object):
                 :directors_list,
                 :title,
                 :studio,
+                :fanart_xml,
                 :trailer,
                 :country_list,
                 :released,
@@ -228,7 +230,7 @@ class KodiMovies(object):
             title,
             plot,
             None,
-            None,
+            tagline,
             votecount,
             uniqueid,
             writers,
@@ -258,6 +260,7 @@ class KodiMovies(object):
             c05 = :ratingid,
             c06 = :writers_list,
             c07 = :year,
+            c08 = :thumbs_xml,
             c09 = :imdb,
             c10 = :title,
             c11 = :runtime,
@@ -267,6 +270,7 @@ class KodiMovies(object):
             c16 = :title,
             c18 = :studio,
             c19 = :trailer,
+            c20 = :fanart_xml,
             c21 = :country_list,
             premiered = :released,
             c22 = :full_path,
