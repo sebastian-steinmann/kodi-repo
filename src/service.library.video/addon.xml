@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="service.library.video" name="Video lib sync" version="0.5.1" provider-name="Steinmann">
+<addon id="service.library.video" name="Video lib sync" version="0.5.2" provider-name="Steinmann">
   <requires>
     <import addon="xbmc.python" version="2.14.0"/>
     <import addon="script.module.requests" version="2.9.1" />
@@ -17,6 +17,8 @@
     <email/>
     <source></source>
     <news>
+    0.5.2
+    * Fjernet kodi-kommando for å oppdatere lib, da den satt igang andre scans også
     0.5.1
     * Fikset feil med filmer som manglet trailer
     * Gjør en initial scan

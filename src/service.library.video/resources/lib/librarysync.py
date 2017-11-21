@@ -171,7 +171,6 @@ class Library(threading.Thread):
         if self.pdialog:
             self.pdialog.close()
 
-        xbmc.executebuiltin('UpdateLibrary(video)')
         return total, l_count
 
     def save_last_full_sync(self, last_sync):
