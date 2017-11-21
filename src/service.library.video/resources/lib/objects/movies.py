@@ -120,7 +120,6 @@ class Movies(object):
         return result
 
     def _add_people(self, movie):
-        thumb = None
         movieid = movie.get('id')
         people = [{'Name': actor, 'Type': 'Actor'}
                   for actor in movie.get('actors')]
@@ -133,12 +132,17 @@ class Movies(object):
 
     def _add_or_update_meta(self, movie):
         movieid = movie.get('movieid')
-        self.kodi_db.add_update_art(movie.get('poster'), movieid, 'poster', 'movie')
-        self.kodi_db.add_update_art(movie.get('poster'), movieid, 'thumb', 'movie')
+        base_url = 'https://image.tmdb.org/t/p/%s%s'
+        poster = base_url % ('w1000', movie.get('poster_path'))
+        thumb = base_url % ('w200', movie.get('poster_path'))
+        fanart = base_url % ('original', movie.get('backdrop_path'))
+
+        self.kodi_db.add_update_art(poster, movieid, 'poster', 'movie')
+        self.kodi_db.add_update_art(thumb, movieid, 'thumb', 'movie')
+        self.kodi_db.add_update_art(fanart, movieid, 'fanart', 'movie')
         self.kodi_db.add_genres(movieid, movie.get('genres'))
         # self.kodi_db.set_streamdetails(**movie)
         self._sync_tags(movie)
-
 
         # self._add_people(movie)
 
@@ -172,14 +176,33 @@ class Movies(object):
 
     def _map_move_data(self, movie):
         last_update = self.date_utils.get_kodi_date_format(movie.get('last_update'))
+        if movie.get('trailer'):
+            trailer = "plugin://plugin.video.youtube/?action=play_video&videoid=%s" % movie.get('trailer')
+
+        base_url = 'https://image.tmdb.org/t/p/%s%s'
+        poster_preview = base_url % ('w500', movie.get('poster_path'))
+        poster = base_url % ('original', movie.get('poster_path'))
+        fanart_preview = base_url % ('w500', movie.get('backdrop_path'))
+        fanart = base_url % ('original', movie.get('backdrop_path'))
+
+
+        thumb_xml = '<thumb aspect="poster" preview="%s">%s</thumb>' % (poster_preview, poster)
+        fanart_xml = '''
+            <fanart>
+            <thumb preview="%s">%s</thumb>
+            </fanart>
+        ''' % (fanart_preview, fanart)
+
         movie.update({
             'shortplot': None,
-            'tagline': None,
+            'tagline': movie.get('tagline', None),
             'runtime': self._get_runtime_in_seconds(movie.get('runtime')),
             'studio': None,
-            'trailer': None,
+            'trailer': trailer or None,
             'last_update': last_update,
-            'version': self._generate_str_hash(movie.get('version'), last_update)
+            'version': self._generate_str_hash(movie.get('version'), last_update),
+            'thumbs_xml': thumb_xml,
+            'fanart_xml': fanart_xml
         })
         list_items = {}
         for key, value in movie.iteritems():

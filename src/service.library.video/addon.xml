@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="service.library.video" name="Video lib sync" version="0.4.7" provider-name="Steinmann">
+<addon id="service.library.video" name="Video lib sync" version="0.5.0" provider-name="Steinmann">
   <requires>
     <import addon="xbmc.python" version="2.14.0"/>
     <import addon="script.module.requests" version="2.9.1" />
@@ -17,6 +17,11 @@
     <email/>
     <source></source>
     <news>
+    0.5.0
+    * Lagt til trailers
+    * Lagt til bedre poster/thumb
+    * Lagt til fanart
+    * Lagt til tagline
     0.4.7
     * Skrudd av actor-sync ved update, kun initial insert
     * Fikset full-sync
