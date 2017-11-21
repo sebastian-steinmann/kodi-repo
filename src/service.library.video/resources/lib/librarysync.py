@@ -55,8 +55,10 @@ class Library(threading.Thread):
     def _run_internal(self):
         """ Starts the service """
         log.debug("Starting service service.library.video...")
+        self._start_sync()
         while not (self.monitor.abortRequested() or self.stop_thread):
-            self._start_sync()
+            if self._should_sync():
+                self._start_sync()
 
             if self.stop_thread:
                 # Set in service.py
@@ -71,26 +73,25 @@ class Library(threading.Thread):
         log.warn("###===--- LibrarySync Stopped ---===###")
 
     def _start_sync(self):
-        if self._should_sync():
-            xbmc.executebuiltin('InhibitIdleShutdown(true)')
-            try:
-                start_time = datetime.now()
+        xbmc.executebuiltin('InhibitIdleShutdown(true)')
+        try:
+            start_time = datetime.now()
 
-                total, count = self.update()
-                if not self._should_stop():
-                    self.set_last_sync(start_time)
+            total, count = self.update()
+            if not self._should_stop():
+                self.set_last_sync(start_time)
 
-                elapsedtotal = datetime.now() - start_time
-                log.info("%s av %s filmer lagt til. Det tok %s",
-                        count, total, str(elapsedtotal).split('.')[0])
-            except Exception as e:
-                log.error(e)
+            elapsedtotal = datetime.now() - start_time
+            log.info("%s av %s filmer lagt til. Det tok %s",
+                    count, total, str(elapsedtotal).split('.')[0])
+        except Exception as e:
+            log.error(e)
 
-            finally:
-                window('dings_kodiScan', clear=True)
-                if self.pdialog:
-                    self.pdialog.close()
-                xbmc.executebuiltin('InhibitIdleShutdown(false)')
+        finally:
+            window('dings_kodiScan', clear=True)
+            if self.pdialog:
+                self.pdialog.close()
+            xbmc.executebuiltin('InhibitIdleShutdown(false)')
 
     def show_progress(self, title):
         dialog = None
@@ -170,7 +171,7 @@ class Library(threading.Thread):
         if self.pdialog:
             self.pdialog.close()
 
-        # xbmc.executebuiltin('UpdateLibrary(video)')
+        xbmc.executebuiltin('UpdateLibrary(video)')
         return total, l_count
 
     def save_last_full_sync(self, last_sync):

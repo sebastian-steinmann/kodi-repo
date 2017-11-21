@@ -176,8 +176,9 @@ class Movies(object):
 
     def _map_move_data(self, movie):
         last_update = self.date_utils.get_kodi_date_format(movie.get('last_update'))
-        if movie.get('trailer'):
-            trailer = "plugin://plugin.video.youtube/?action=play_video&videoid=%s" % movie.get('trailer')
+
+        trailer = "plugin://plugin.video.youtube/?action=play_video&videoid=%s" % movie.get('trailer') \
+            if movie.get('trailer') else None
 
         base_url = 'https://image.tmdb.org/t/p/%s%s'
         poster_preview = base_url % ('w500', movie.get('poster_path'))
