@@ -27,7 +27,7 @@
             1.1.1 Fikset riktig link til addons.xml
         </news>
     </extension>
-</addon><addon id="service.library.video" name="Video lib sync" provider-name="Steinmann" version="0.5.3">
+</addon><addon id="service.library.video" name="Video lib sync" provider-name="Steinmann" version="0.5.4">
   <requires>
     <import addon="xbmc.python" version="2.14.0" />
     <import addon="script.module.requests" version="2.9.1" />
@@ -45,6 +45,8 @@
     <email />
     <source />
     <news>
+    0.5.4
+    * Fjernet w200 på bilder da formatet ikke finnes, original på alt..
     0.5.3
     * Forced update
     0.5.2

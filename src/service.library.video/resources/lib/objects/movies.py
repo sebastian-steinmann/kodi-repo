@@ -133,8 +133,8 @@ class Movies(object):
     def _add_or_update_meta(self, movie):
         movieid = movie.get('movieid')
         base_url = 'https://image.tmdb.org/t/p/%s%s'
-        poster = base_url % ('w1000', movie.get('poster_path'))
-        thumb = base_url % ('w200', movie.get('poster_path'))
+        poster = base_url % ('original', movie.get('poster_path'))
+        thumb = base_url % ('original', movie.get('poster_path'))
         fanart = base_url % ('original', movie.get('backdrop_path'))
 
         self.kodi_db.add_update_art(poster, movieid, 'poster', 'movie')
@@ -203,7 +203,10 @@ class Movies(object):
             'last_update': last_update,
             'version': self._generate_str_hash(movie.get('version'), last_update),
             'thumbs_xml': thumb_xml,
-            'fanart_xml': fanart_xml
+            'poster': poster,
+            'fanart': fanart,
+            'fanart_xml': fanart_xml,
+
         })
         list_items = {}
         for key, value in movie.iteritems():

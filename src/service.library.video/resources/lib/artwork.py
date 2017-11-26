@@ -105,10 +105,10 @@ class Artwork(object):
             log.debug("Processing: %s", url)
 
             url = self._double_urlencode(url)
+            action_url = "http://%s:%s/image/image://%s" % (self.xbmc_host, self.xbmc_port, url)
             try: # Add image to texture cache by simply calling it at the http endpoint
-                requests.head(url=("http://%s:%s/image/image://%s"
-                                    % (self.xbmc_host, self.xbmc_port, url)),
+                requests.head(url=(action_url),
                                 auth=(self.xbmc_username, self.xbmc_password),
-                                timeout=(0.1, 0.1))
-            except Exception: # We don't need the result
-                pass
+                                timeout=1)
+            except Exception as e: # We don't need the result
+                log.error("Feil ved precaching av fil %s med feilmelding %s", action_url, e.message)
