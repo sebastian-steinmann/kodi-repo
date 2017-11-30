@@ -23,7 +23,7 @@ class KodiMovies(object):
         self.kodi_version = int(xbmc.getInfoLabel('System.BuildVersion')[:2])
         self.artwork = Artwork()
 
-    def add_path(self, full_path, last_update, version, **kvargs):
+    def add_path(self, full_path, dateadded, version, **kvargs):
         """
         Adds path object and returns new id
         Arguments:

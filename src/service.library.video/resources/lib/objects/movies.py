@@ -176,6 +176,7 @@ class Movies(object):
 
     def _map_move_data(self, movie):
         last_update = self.date_utils.get_kodi_date_format(movie.get('last_update'))
+        dateadded = self.date_utils.get_kodi_date_format(movie.get('last_update'))
 
         trailer = "plugin://plugin.video.youtube/?action=play_video&videoid=%s" % movie.get('trailer') \
             if movie.get('trailer') else None
@@ -185,7 +186,6 @@ class Movies(object):
         poster = base_url % ('original', movie.get('poster_path'))
         fanart_preview = base_url % ('w500', movie.get('backdrop_path'))
         fanart = base_url % ('original', movie.get('backdrop_path'))
-
 
         thumb_xml = '<thumb aspect="poster" preview="%s">%s</thumb>' % (poster_preview, poster)
         fanart_xml = '''
@@ -202,6 +202,7 @@ class Movies(object):
             'trailer': trailer or None,
             'last_update': last_update,
             'version': self._generate_str_hash(movie.get('version'), last_update),
+            'dateadded': dateadded,
             'thumbs_xml': thumb_xml,
             'poster': poster,
             'fanart': fanart,

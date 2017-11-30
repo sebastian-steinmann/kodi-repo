@@ -18,7 +18,7 @@ log = logging.getLogger("DINGS.library")  # pylint: disable=invalid-name
 
 class Library(threading.Thread):
     """ Root service for sync """
-    client_version = '4'
+    client_version = '5'
     _shared_state = {}
     stop_thread = False
 
