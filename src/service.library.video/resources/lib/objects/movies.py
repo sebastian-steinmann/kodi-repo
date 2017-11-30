@@ -318,4 +318,4 @@ class FullMovieUpdater(Movies):
         return 'Full Update'
 
     def _should_update(self, orgMovie, newMovie):
-            return True
+        return True

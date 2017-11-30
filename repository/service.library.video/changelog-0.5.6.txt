@@ -1,0 +1,19 @@
+0.4.1
+* Forbedret sjekk og opprettelse av tags/genres
+0.4.0
+* Lagt til sync av tags
+0.3.1
+* Fikset feil ved lagring av client_version
+0.3.0
+* La til client_version som gjør full sync når client oppdaterer seg
+* Fikset feil der dateAdded ikke ble fikset (Skriver nå over igjen)
+0.2.0:
+* Fikset rating-vising
+* endret så dateAdded blir riktig
+* Oppdaterer ikke dateAdded med last_changed, men bruker strHash istedenfor
+0.1.2:
+Fikset poc filer og riktig logging ved incremental
+0.1.1:
+Fikset dateparse feil
+0.1.0:
+Initial

@@ -39,7 +39,7 @@ class KodiMovies(object):
                 VALUES (?, ?, ?, ?, ?, ?)
                 '''
             )
-            self.cursor.execute(query, (full_path, 'movies', 'metadata.local', 1, version, last_update))
+            self.cursor.execute(query, (full_path, 'movies', 'metadata.local', 1, version, dateadded))
             path_id = self.cursor.lastrowid
         return path_id
 
@@ -55,7 +55,7 @@ class KodiMovies(object):
         except TypeError:
             return None
 
-    def update_path(self, pathid, full_path, last_update, version, **kvargs):
+    def update_path(self, pathid, full_path, dateadded, version, **kvargs):
         """
         Updates path with new data
         Arguments:
@@ -67,7 +67,7 @@ class KodiMovies(object):
             SET strPath = ?, strContent = ?, strScraper = ?, noUpdate = ?, dateAdded = ?, strHash = ?
             WHERE idPath = ?
         '''
-        self.cursor.execute(query, (full_path, 'movies', 'metadata.local', 1, last_update, version, pathid))
+        self.cursor.execute(query, (full_path, 'movies', 'metadata.local', 1, dateadded, version, pathid))
 
     def remove_path(self, path_id):
         self.cursor.execute("DELETE FROM path WHERE idPath = ?", (path_id,))
@@ -93,7 +93,7 @@ class KodiMovies(object):
             query = (
                 '''
                 INSERT INTO files(idPath, strFilename, dateAdded)
-                VALUES (:pathid, :filename, :last_update)
+                VALUES (:pathid, :filename, :dateadded)
                 '''
             )
             self.cursor.execute(query, kvargs)
@@ -109,7 +109,7 @@ class KodiMovies(object):
         """
         query = '''
             UPDATE files
-            SET idPath = :pathid, strFilename = :filename, dateAdded = :last_update
+            SET idPath = :pathid, strFilename = :filename, dateAdded = :dateadded
             WHERE idFile = :fileid
         '''
         self.cursor.execute(query, kvargs)
