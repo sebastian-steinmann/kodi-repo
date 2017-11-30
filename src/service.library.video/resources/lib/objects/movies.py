@@ -120,7 +120,7 @@ class Movies(object):
         return result
 
     def _add_people(self, movie):
-        movieid = movie.get('id')
+        movieid = movie.get('movieid')
         people = [{'Name': actor, 'Type': 'Actor'}
                   for actor in movie.get('actors')]
         people.extend([{'Name': writer, 'Type': 'Writer'}
@@ -205,8 +205,7 @@ class Movies(object):
             'thumbs_xml': thumb_xml,
             'poster': poster,
             'fanart': fanart,
-            'fanart_xml': fanart_xml,
-
+            'fanart_xml': fanart
         })
         list_items = {}
         for key, value in movie.iteritems():
