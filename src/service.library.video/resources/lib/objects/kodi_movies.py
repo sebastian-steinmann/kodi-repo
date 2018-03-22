@@ -8,6 +8,7 @@ import xbmc
 ##################################################################################################
 
 from resources.lib.artwork import Artwork
+from resources.lib.objects.kodi_objects import KodiObjects
 
 ##################################################################################################
 
@@ -16,12 +17,7 @@ log = logging.getLogger("DINGS.db") # pylint: disable=invalid-name
 ##################################################################################################
 
 
-class KodiMovies(object):
-
-    def __init__(self, cursor):
-        self.cursor = cursor
-        self.kodi_version = int(xbmc.getInfoLabel('System.BuildVersion')[:2])
-        self.artwork = Artwork()
+class KodiMovies(KodiObjects):
 
     def add_path(self, full_path, dateadded, version, **kvargs):
         """

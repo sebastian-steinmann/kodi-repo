@@ -1,0 +1,60 @@
+{
+  "episodes": [
+    {
+      "id": 3425,
+      "serie": 262,
+      "title": "Fizbo",
+      "season": 1,
+      "episode": 9,
+      "last_updated": "2009-11-26T02:39:21.000Z",
+      "releaseId": 3693,
+      "name": "Modern.Family.S01E09.PROPER.720p.HDTV.x264-CTU",
+      "added": "2009-11-26T02:56:09.000Z",
+      "filename": "modern.family.s01e09.proper.720p.hdtv.x264-ctu.mkv"
+    },
+    {
+      "id": 20,
+      "serie": 3,
+      "title": "The Loobenfeld Decay",
+      "season": 1,
+      "episode": 10,
+      "last_updated": "2008-03-25T01:23:16.000Z",
+      "releaseId": 21,
+      "name": "The.Big.Bang.Theory.S01E10.720p.HDTV.x264-CTU",
+      "added": "2008-03-25T01:23:16.000Z",
+      "filename": "the.big.bang.theory.s01e10.720p.hdtv.x264-ctu.mkv"
+    }
+  ],
+  "tvshows": [
+    {
+      "id": 3,
+      "title": "The Big Bang Theory",
+      "plot":
+        "What happens when hyperintelligent roommates Sheldon and Leonard meet Penny, a free-spirited beauty moving in next door, and realize they know next to nothing about life outside of the lab. Rounding out the crew are the smarmy Wolowitz, who thinks he's as sexy as he is brainy, and Koothrappali, who suffers from an inability to speak in the presence of a woman.",
+      "firstAired": "2007-09-23T22:00:00.000Z",
+      "thumb": "posters/80379-43.jpg",
+      "genre": ["Comedy"],
+      "seriesId": 80379,
+      "mpaa": "TV-14",
+      "studio": "CBS",
+      "runtime": 25,
+      "last_updated": "2017-11-17T00:36:02.000Z",
+      "path": "/series/the.big.bang.theory/"
+    },
+    {
+      "id": 262,
+      "title": "Modern Family",
+      "plot":
+        "This mockumentary explores the many different types of a modern family through the stories of a gay couple, comprised of Mitchell and Cameron, and their daughter Lily, a straight couple, comprised of Phil and Claire, and their three kids, Haley, Alex, and Luke, and a multi-ethnic couple, which is comprised of Jay and Gloria, and her son Manny.",
+      "firstAired": "2009-09-22T22:00:00.000Z",
+      "thumb": "posters/95011-22.jpg",
+      "genre": ["Comedy"],
+      "seriesId": 95011,
+      "mpaa": "TV-PG",
+      "studio": "ABC (US)",
+      "runtime": 25,
+      "last_updated": "2017-11-16T01:48:56.000Z",
+      "path": "/series/modern.family/"
+    }
+  ]
+}
