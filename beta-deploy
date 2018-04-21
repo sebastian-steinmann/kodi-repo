@@ -1,0 +1,11 @@
+#../kodi-repository.chad.parry.org/tools/create_repository.py --datadir=./repository --compressed \
+#https://github.com/sebastian-steinmann/kodi-repo.git#master:repository/steinmann.http.repository \
+#https://github.com/sebastian-steinmann/kodi-repo.git#master:plugins/service.library.video/service.library.video \
+#https://github.com/sebastian-steinmann/kodi-repo.git#master:plugins/service.subtitles.http/service.subtitles.http
+
+
+../kodi-repository.chad.parry.org/tools/create_repository.py \
+--datadir=./repository \
+./src/steinmann.http.repository.beta \
+./src/service.library.video \
+./src/service.subtitles.http
