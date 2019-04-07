@@ -202,7 +202,10 @@ class Library(threading.Thread):
         self._update_client_version()
 
     def get_sync_interval(self):
-        return settings("interval") or 10
+        interval = settings("interval")
+        if not interval:
+            return 10
+        return int(interval)
 
     def get_last_sync(self):
         last_sync = settings('LastIncrementalSync')
