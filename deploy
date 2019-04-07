@@ -4,7 +4,8 @@
 #https://github.com/sebastian-steinmann/kodi-repo.git#master:plugins/service.subtitles.http/service.subtitles.http
 
 
-../kodi-repository.chad.parry.org/tools/create_repository.py --datadir=./repository \
+../kodi-repository.chad.parry.org/tools/create_repository.py \
+--datadir=./repository \
 ./src/steinmann.http.repository \
 ./src/service.library.video \
 ./src/service.subtitles.http

@@ -1,16 +1,16 @@
-<addon id="steinmann.http.repository" name="Http Repository" version="1.1.1" provider-name="Steinmann">
+<addon id="steinmann.http.beta.repository" name="Http beta Repository" version="1.1.1" provider-name="Steinmann">
     <requires>
         <import addon="xbmc.addon" version="14.0.0"/>
     </requires>
-    <extension point="xbmc.addon.repository" name="Http Repository">
+    <extension point="xbmc.addon.repository" name="Http beta Repository">
         <info compressed="false">
-            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/master/repository/addons.xml
+            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/develop/repository/addons.xml
         </info>
         <checksum>
-            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/master/repository/addons.xml
+            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/develop/repository/addons.xml
         </checksum>
         <datadir zip="true">
-            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/master/repository/
+            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/develop/repository/
         </datadir>
         <hashes>true</hashes>
     </extension>

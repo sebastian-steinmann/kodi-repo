@@ -30,8 +30,13 @@ class Library(threading.Thread):
     date_utils = DateUtils()
 
     def __init__(self):
+        super(Library, self).__init__(name='Library')
         self.__dict__ = self._shared_state
         self.monitor = xbmc.Monitor()
+
+        self._abort_event = threading.Event()
+        self._abort_event.clear()
+
         self.api = Api(
             settings("host"),
             settings("username"),
@@ -56,11 +61,11 @@ class Library(threading.Thread):
         """ Starts the service """
         log.debug("Starting service service.library.video...")
         self._start_sync()
-        while not (self.monitor.abortRequested() or self.stop_thread):
+        while not (self._should_stop()):
             if self._should_sync():
                 self._start_sync()
 
-            if self.stop_thread:
+            if self._should_stop():
                 # Set in service.py
                 log.debug("Service terminated thread.")
                 break
@@ -257,8 +262,9 @@ class Library(threading.Thread):
             self.pdialog.update(percentage, message=self.title)
 
     def _should_stop(self):
-        return self.stop_thread or self.monitor.abortRequested()
+        return self._abort_event.is_set() or self.stop_thread or self.monitor.abortRequested()
 
     def stopThread(self):
         self.stop_thread = True
+        self._abort_event.set()
         log.debug("Ending thread...")

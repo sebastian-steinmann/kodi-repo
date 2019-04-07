@@ -29,7 +29,7 @@ class Service(object):
                 self.library_thread.start()
 
             # Sleep/wait for abort for 5 seconds
-            if self.monitor.abortRequested() or self.monitor.waitForAbort(1):
+            if self.monitor.waitForAbort(10):
                 log.info("Aborting!")
                 # Abort was requested while waiting. We should exit
                 break
