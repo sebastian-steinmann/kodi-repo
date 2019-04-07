@@ -1,17 +1,17 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<addons><addon id="steinmann.http.beta.repository" name="Http beta Repository" provider-name="Steinmann" version="1.1.1">
+<addons><addon id="steinmann.http.repository" name="Http Beta Repository" provider-name="Steinmann" version="1.1.1">
     <requires>
         <import addon="xbmc.addon" version="14.0.0" />
     </requires>
-    <extension name="Http beta Repository" point="xbmc.addon.repository">
+    <extension name="Http Beta Repository" point="xbmc.addon.repository">
         <info compressed="false">
-            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/develop/repository/addons.xml
+            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/master/repository/addons.xml
         </info>
         <checksum>
-            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/develop/repository/addons.xml
+            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/master/repository/addons.xml
         </checksum>
         <datadir zip="true">
-            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/develop/repository/
+            https://raw.githubusercontent.com/sebastian-steinmann/kodi-repo/master/repository/
         </datadir>
         <hashes>true</hashes>
     </extension>
@@ -27,7 +27,7 @@
             1.1.1 Fikset riktig link til addons.xml
         </news>
     </extension>
-</addon><addon id="service.library.video" name="Video lib sync" provider-name="Steinmann" version="0.5.8-2">
+</addon><addon id="service.library.video" name="Video lib sync" provider-name="Steinmann" version="0.5.8">
   <requires>
     <import addon="xbmc.python" version="2.14.0" />
     <import addon="script.module.requests" version="2.9.1" />
