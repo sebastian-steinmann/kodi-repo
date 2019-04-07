@@ -38,7 +38,7 @@ class Service(object):
         self.shutdown()
 
     def shouldRun(self):
-        return not self.library_running && not self.player.isPlaying()
+        return not self.library_running and not self.player.isPlaying()
 
     def shutdown(self):
         """ cleanup in case of abort """
