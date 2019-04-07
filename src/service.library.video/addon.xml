@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="service.library.video" name="Video lib sync" version="0.5.9-1" provider-name="Steinmann">
+<addon id="service.library.video" name="Video lib sync" version="0.6.0" provider-name="Steinmann">
   <requires>
     <import addon="xbmc.python" version="2.14.0"/>
     <import addon="script.module.requests" version="2.9.1" />
@@ -17,6 +17,10 @@
     <email/>
     <source></source>
     <news>
+    0.6.0
+    * Fikset så sjekk ligger riktig sted og la på interval på settings
+    0.5.8
+    * Fikset så den ikke kjører sync mens man ser serie/film for å begrense crash and burn
     0.5.8-1
     * Fikset threading issues
     0.5.7
