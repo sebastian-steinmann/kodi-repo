@@ -3,6 +3,7 @@
 	<category label="70000">
 		<setting id="host" label="70001" type="text" default="http://localhost:3000"  />
 		<setting id="endpoint" label="70004" type="text" default="http://localhost:3000" />
+		<setting id="interval" label="70005" type="number" default="10" />
 		<setting id="username" label="70002" type="text" default="sebastian" />
 		<setting id="password" label="70003" type="text" option="hidden"  enable="!eq(-1,)"  default="dings12345" />
 		<setting type="sep" />

@@ -17,7 +17,6 @@ class Service(object):
 
     def __init__(self):
         self.monitor = xbmc.Monitor()
-        self.player = xbmc.Player()
 
     def run(self):
         """ Starts the service """
@@ -38,11 +37,11 @@ class Service(object):
         self.shutdown()
 
     def shouldRun(self):
-        return not self.library_running and not self.player.isPlaying()
+        return not self.library_running
 
     def shutdown(self):
         """ cleanup in case of abort """
         xbmc.executebuiltin('InhibitIdleShutdown(false)')
-
+        self.monitor = None
         if self.library_running:
             self.library_thread.stopThread()

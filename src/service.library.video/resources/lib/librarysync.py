@@ -32,6 +32,7 @@ class Library(threading.Thread):
         super(Library, self).__init__(name='Library')
         self.__dict__ = self._shared_state
         self.monitor = xbmc.Monitor()
+        self.player = xbmc.Player()
 
         self._abort_event = threading.Event()
         self._abort_event.clear()
@@ -55,11 +56,13 @@ class Library(threading.Thread):
                 self.pdialog.close()
             self.monitor = None
             self.pdialog = None
+            self.player = None
 
     def _run_internal(self):
         """ Starts the service """
         log.debug("Starting service service.library.video...")
-        self._start_sync()
+        if not self.player.isPlaying():
+            self._start_sync()
         while not (self._should_stop()):
             if self._should_sync():
                 self._start_sync()
@@ -69,7 +72,7 @@ class Library(threading.Thread):
                 log.debug("Service terminated thread.")
                 break
 
-            if self._should_stop() or self.monitor.waitForAbort(1):
+            if self._should_stop() or self.monitor.waitForAbort(10):
                 # Abort was requested while waiting. We should exit
                 log.debug("waitForAbort")
                 break
@@ -198,6 +201,9 @@ class Library(threading.Thread):
         settings('LastIncrementalSync', self.date_utils.get_str_date(last_sync))
         self._update_client_version()
 
+    def get_sync_interval(self):
+        return settings("interval") or 10
+
     def get_last_sync(self):
         last_sync = settings('LastIncrementalSync')
         if not last_sync:
@@ -227,8 +233,11 @@ class Library(threading.Thread):
         return diff.total_seconds() > interval_seconds
 
     def _should_sync(self):
+        if self.player.isPlaying():
+            return False
         last_sync = self.get_last_sync()
-        interval_seconds = 60 * 10 # sync every 10 minutes
+        sync_interval = self.get_sync_interval()
+        interval_seconds = 60 * sync_interval # sync every 10 minutes
 
         diff = datetime.now() - last_sync
         return diff.total_seconds() > interval_seconds
