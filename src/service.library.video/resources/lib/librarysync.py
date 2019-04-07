@@ -15,7 +15,6 @@ from resources.lib.date_utils import DateUtils
 
 log = logging.getLogger("DINGS.library")  # pylint: disable=invalid-name
 
-
 class Library(threading.Thread):
     """ Root service for sync """
     client_version = '5'

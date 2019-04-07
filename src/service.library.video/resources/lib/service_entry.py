@@ -17,6 +17,7 @@ class Service(object):
 
     def __init__(self):
         self.monitor = xbmc.Monitor()
+        self.player = xbmc.Player()
 
     def run(self):
         """ Starts the service """
@@ -24,17 +25,20 @@ class Service(object):
 
         log.debug("Starting service service.library.video...")
         while not self.monitor.abortRequested():
-            if not self.library_running:
+            if self.shouldRun():
                 self.library_running = True
                 self.library_thread.start()
 
-            # Sleep/wait for abort for 5 seconds
+            # Sleep/wait for abort for 10 seconds
             if self.monitor.waitForAbort(10):
                 log.info("Aborting!")
                 # Abort was requested while waiting. We should exit
                 break
 
         self.shutdown()
+
+    def shouldRun(self):
+        return not self.library_running && not self.player.isPlaying()
 
     def shutdown(self):
         """ cleanup in case of abort """
