@@ -16,7 +16,7 @@ import string
 import difflib
 import HTMLParser
 from operator import itemgetter
-from urlparse import urlparse
+from urllib.parse import urlparse
 import base64
 import shutil
 

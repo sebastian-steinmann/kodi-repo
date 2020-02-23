@@ -18,14 +18,15 @@ KODI = xbmc.getInfoLabel('System.BuildVersion')[:2]
 def video_database():
     db_version = {
 
-        '13': 78, # Gotham
-        '14': 90, # Helix
-        '15': 93, # Isengard
-        '16': 99, # Jarvis
-        '17': 107 # Krypton
+        '13': 78,  # Gotham
+        '14': 90,  # Helix
+        '15': 93,  # Isengard
+        '16': 99,  # Jarvis
+        '17': 107, # Krypton
+        '18': 116, # Leia
+        '19': 116  # Matrix
     }
-    return xbmc.translatePath("special://database/MyVideos%s.db"
-                              % db_version.get(KODI, "")).decode('utf-8')
+    return xbmc.translatePath("special://database/MyVideos%s.db" % db_version.get(KODI, ""))
 
 def kodi_commit():
     # verification for the Kodi video scan

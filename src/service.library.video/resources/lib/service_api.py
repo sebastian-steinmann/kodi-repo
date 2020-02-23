@@ -1,13 +1,13 @@
 """ Class to call remote http api """
 import logging
-from http_client import HttpClient
+from resources.lib.http_client import HttpClient
 
 log = logging.getLogger("DINGS.api") # pylint: disable=invalid-name
 
 class Api(object):
     """ Class to call remote http api """
     def __init__(self, host, user, password):
-        self.client = HttpClient("%s/api/" % host, user, password)
+        self.client = HttpClient("%s/api" % host, user, password)
 
     def get_movies_from(self, last_update):
         """

@@ -1,7 +1,7 @@
 """ Handle movies """
 from abc import ABCMeta, abstractmethod
 import logging
-from urlparse import urlparse
+import urllib
 
 from resources.lib.util import settings
 from resources.lib.objects.kodi_movies import KodiMovies
@@ -102,7 +102,7 @@ class Movies(object):
 
     def _get_full_path(self, folder):
         """ Add host, username and password to folderpath """
-        url_parts = urlparse(settings("endpoint"))
+        url_parts = urllib.parse.urlparse(settings("endpoint"))
         return "%s://%s:%s@%s%s/movies/%s/" % (
             url_parts.scheme,
             settings("username"),
@@ -184,15 +184,15 @@ class Movies(object):
         base_url = 'https://image.tmdb.org/t/p/%s%s'
         poster_preview = base_url % ('w500', movie.get('poster_path'))
         poster = base_url % ('original', movie.get('poster_path'))
-        fanart_preview = base_url % ('w500', movie.get('backdrop_path'))
+        # fanart_preview = base_url % ('w500', movie.get('backdrop_path'))
         fanart = base_url % ('original', movie.get('backdrop_path'))
 
         thumb_xml = '<thumb aspect="poster" preview="%s">%s</thumb>' % (poster_preview, poster)
-        fanart_xml = '''
-            <fanart>
-            <thumb preview="%s">%s</thumb>
-            </fanart>
-        ''' % (fanart_preview, fanart)
+        # fanart_xml = '''
+        #     <fanart>
+        #     <thumb preview="%s">%s</thumb>
+        #     </fanart>
+        # ''' % (fanart_preview, fanart)
 
         movie.update({
             'shortplot': None,
@@ -209,7 +209,7 @@ class Movies(object):
             'fanart_xml': fanart
         })
         list_items = {}
-        for key, value in movie.iteritems():
+        for key, value in movie.items():
             if type(value) is list:
                 list_items["%s_list" % key] = self._map_array(value)
         movie.update(list_items)
@@ -241,11 +241,11 @@ class Movies(object):
 
     def _pick(self, data, fields, extras={}):
         new_dict = {key: value for key,
-                    value in data.iteritems() if key in fields}
+                    value in data.items() if key in fields}
         new_dict.update(extras)
 
         return {key.encode('ascii', 'ignore'): self._map_array(value)
-                for key, value in new_dict.iteritems()}
+                for key, value in new_dict.items()}
 
     def _map_array(self, value):
         if type(value) is list:

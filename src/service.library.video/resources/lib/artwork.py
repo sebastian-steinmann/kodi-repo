@@ -35,10 +35,10 @@ class Artwork(object):
     @classmethod
     def single_urlencode(cls, text):
         # urlencode needs a utf- string
-        text = urllib.urlencode({'blahblahblah': text.encode('utf-8')})
+        text = urllib.parse.urlencode({'blahblahblah': text.encode('utf-8')})
         text = text[13:]
 
-        return text.decode('utf-8') #return the result again as unicode
+        return text #return the result again as unicode
 
     def _set_webserver_details(self):
         # Get the Kodi webserver details - used to set the texture cache
@@ -111,4 +111,4 @@ class Artwork(object):
                                 auth=(self.xbmc_username, self.xbmc_password),
                                 timeout=1)
             except Exception as e: # We don't need the result
-                log.error("Feil ved precaching av fil %s med feilmelding %s", action_url, e.message)
+                log.exception("Feil ved precaching av fil %s med feilmelding %s", action_url, e)

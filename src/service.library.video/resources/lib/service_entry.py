@@ -4,7 +4,7 @@ import logging
 import xbmc
 
 import resources.lib.loghandler as loghandler
-from librarysync import Library
+from resources.lib.librarysync import Library
 
 loghandler.config()
 log = logging.getLogger("DINGS.service")  # pylint: disable=invalid-name
@@ -22,7 +22,7 @@ class Service(object):
         """ Starts the service """
         self.library_thread = Library()
 
-        log.debug("Starting service service.library.video...")
+        log.debug("Starting service library sync...")
         while not self.monitor.abortRequested():
             if self.shouldRun():
                 self.library_running = True

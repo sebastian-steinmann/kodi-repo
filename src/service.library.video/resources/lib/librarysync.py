@@ -92,7 +92,7 @@ class Library(threading.Thread):
             log.info("%s av %s filmer lagt til. Det tok %s",
                     count, total, str(elapsedtotal).split('.')[0])
         except Exception as e:
-            log.error(e)
+            log.exception(e)
 
         finally:
             window('dings_kodiScan', clear=True)

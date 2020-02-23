@@ -1,12 +1,15 @@
 """ http_client.py """
 
-import urllib2
+import urllib
 import base64
 import json
 
 import hashlib
+import logging
 
-from util import version
+from resources.lib.util import version
+
+log = logging.getLogger("DINGS.HttpClient")
 
 class HttpClient(object):
     """ Client to do http-calls """
@@ -24,16 +27,24 @@ class HttpClient(object):
 
     def get(self, path):
         """ Returns content from path """
-        request = urllib2.Request("%s%s" % (self.endpoint, path))
-        base64string = base64.encodestring('%s:%s' % (self.user, self.password)).replace('\n', '')
-        request.add_header("Authorization", "Basic %s" % base64string)
-        request.add_header("Accepts", self._get_accepts_headers())
-        response = urllib2.urlopen(request)
-        content_version = response.info().getheader('Version')
-        items = json.load(response)
-
-        compiled_version = hashlib.md5(("%s-%s" % (content_version, version())).encode()).hexdigest()
-        return self._with_version(items, compiled_version)
+        try:
+            fullPath = "%s%s" % (self.endpoint, path)
+            request = urllib.request.Request(fullPath)
+            
+            base64bytes = base64.encodestring(bytes('%s:%s' % (self.user, self.password), 'utf-8'))
+            base64string = base64bytes.decode('utf-8').replace('\n', '')
+            request.add_header("Authorization", ("Basic %s" % base64string))
+            request.add_header("Accepts", self._get_accepts_headers())
+            # import web_pdb; web_pdb.set_trace()
+            response = urllib.request.urlopen(request)
+            content_version = response.headers.get('Version')
+            items = json.load(response)
+            
+            compiled_version = hashlib.md5(("%s-%s" % (content_version, version())).encode()).hexdigest()
+            
+            return self._with_version(items, compiled_version)
+        except Exception as e:
+            log.exception("error trying to connect to %s with error %s", fullPath, e)
 
     def _with_version(self, items, compiled_version):
             return [dict(item, **{'version': compiled_version}) for item in items]
